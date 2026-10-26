@@ -224,17 +224,17 @@ The Playwright MCP server couldn't start here, because it needs Google Chrome an
 
 **Why:** the earlier phases test the parts with stubs. This one checks they work together on real claims, the way the team will use them.
 
-- [ ] `uv run -m agent`, running in the background, works all 25 claims and prints a line for each. On Luna at low reasoning this costs a few cents. Every claim ends `decided` or `waiting_for_sign_off`, and none is left waiting or in progress.
-- [ ] Through `list_claims` and `get_claim`:
+- [x] `uv run -m agent`, running in the background, works all 25 claims and prints a line for each. On Luna at low reasoning this costs a few cents. Every claim ends `decided` or `waiting_for_sign_off`, and none is left waiting or in progress.
+- [x] Through `list_claims` and `get_claim`:
   - every claim with a decision has reasons and a policy section
   - every approval of $1,000.00 or less is paid exactly its payout
   - every approval over $1,000.00 waits for sign-off with no payment
   - every decline and referral has a payout of zero and no payment
-- [ ] For every claim, `list_steps` shows "Read the claim", "Read the policy" and "Read the claim history" before "Record the decision".
-- [ ] While the agent runs, the browser through the Playwright MCP server shows claims moving through the states on the queue, and the steps arriving on the page of a claim the agent hasn't reached yet.
-- [ ] Signing off one claim that waits for sign-off, in the browser, shows it decided and paid, and `get_claim` agrees.
-- [ ] `docs/STATUS.md` says what's built and how to run it: `npm run dev`, `uv run -m agent`, `uv run -m backend.seed` and `npm run check`.
-- [ ] `npm run check` passes, and the results are reported. The run's decisions stay in the database for you to look through, and `uv run -m backend.seed` resets the queue.
+- [x] For every claim, `list_steps` shows "Read the claim", "Read the policy" and "Read the claim history" before "Record the decision".
+- [x] While the agent runs, the browser through the Playwright MCP server shows claims moving through the states on the queue, and the steps arriving on the page of a claim the agent hasn't reached yet.
+- [x] Signing off one claim that waits for sign-off, in the browser, shows it decided and paid, and `get_claim` agrees.
+- [x] `docs/STATUS.md` says what's built and how to run it: `npm run dev`, `uv run -m agent`, `uv run -m backend.seed` and `npm run check`.
+- [x] `npm run check` passes, and the results are reported. The run's decisions stay in the database for you to look through, and `uv run -m backend.seed` resets the queue.
 
 ## Not in this plan
 
