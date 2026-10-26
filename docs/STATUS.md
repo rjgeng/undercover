@@ -20,7 +20,7 @@ The claims pilot from `docs/PLAN.md` is built: all six phases are done.
 
 ## The first run of the whole queue
 
-`uv run -m agent` worked all 25 claims on GPT-6 Luna at low reasoning. It approved 16 (13 paid, 3 over $1,000.00 waiting for sign-off), declined 6 and referred 3, with none left waiting or in progress. Its accuracy against the handlers' decisions in `data/evals/` hasn't been measured. Those decisions are still in the database, with CLM-1011 signed off by Dana Whitfield. `uv run -m backend.seed` resets the queue.
+On October 25, 2026, `uv run -m agent` worked all 25 claims on GPT-6 Luna at low reasoning, in about 8 minutes. It approved 16 (13 paid, and 3 over $1,000.00 held for sign-off: CLM-1003, CLM-1008 and CLM-1011), declined 6 and referred 3, with none left waiting or in progress. CLM-1011 was then signed off in the dashboard and paid. Its accuracy against the handlers' decisions in `data/evals/` hasn't been measured. The queue has been reseeded since that run.
 
 ## How to run it
 
