@@ -1,6 +1,6 @@
 # Plan: fixes to the pilot from the comparison with Ed's build
 
-The comparison of `week1day3-rj` with Ed's `week1day3-end`, checked claim by claim by a second agent, found places where Ed's build does better. This plan takes the ones `docs/SPEC.md`, `docs/TECH_STACK.md` and `docs/PROCESS.md` ask for. It builds on the pilot in `docs/PLAN.md` and keeps its decisions, except where a phase below changes one.
+The comparison of `week1day3-rj` with Ed's `week1day3-end`, checked claim by claim by a second agent, found places where Ed's build does better. This plan takes the ones `docs/` asks for, plus a few small dashboard touches that Ed's Day 3 build has and the student chose: the decided time, add-on names, the current page marked in the header and a larger alert. It builds on the pilot in `docs/PLAN.md` and keeps its decisions, except where a phase below changes one.
 
 There are four phases. Each one ends with every check green, its criteria ticked, `docs/STATUS.md` updated and a commit.
 
@@ -18,7 +18,7 @@ There are four phases. Each one ends with every check green, its criteria ticked
 - **Text that must not be empty:** a decision's `reasons` and `policy_section`, a start's `thread_id`, and a step's `title` and `detail` must have at least one character that isn't a space (422 otherwise). A decision is final, so a decision with no explanation could never be put right.
 - **No steps on a claim nobody has started:** `add_step` answers 409 for a waiting claim. Steps on a claim waiting for sign-off or decided are still allowed, because the harness records the payment and the final reply after the decision.
 - **The claim history on its own:** a new operation `get_claim_history`, `GET /api/customers/{customer_id}/claims`, returns only the customer's earlier claims. It replaces `get_customer`, so no route serves anyone's email, phone, date of birth or address. `get_claim` gains `customer_name` for the dashboard, as `list_claims` already has. The claim page loses the "Customer since" line, which nothing in the spec asks for.
-- **UTF-8:** every file the backend reads is read as UTF-8, so a character outside ASCII in `data/` or the instructions reads the same on Windows.
+- **UTF-8:** every file the backend reads is read as UTF-8, so a character outside ASCII in `data/` or the instructions reads the same on Windows. After the plan's review, `npm run check:python` runs the tests with Python's encoding warning as an error, so a read without an encoding fails on a Mac too.
 - **Built in this phase as well:** the agent's history tool and the dashboard's customer panel move to the new operation here, not in phases 2 and 3, because removing `get_customer` would otherwise break them. The handlers' list drops the handlers' emails too, which nothing shows, so no route serves anyone's email.
 
 **Why:** the spec asks for each decision's explanation and section, and `data/README.md` calls the customer records personal data. Both rules belong in the backend, where they hold whoever calls.
