@@ -1,6 +1,10 @@
+import { ClaimPage } from "./ClaimPage";
+import { InstructionsPage } from "./InstructionsPage";
 import { QueuePage } from "./QueuePage";
+import { useRoute, type Route } from "./route";
 
 export function App() {
+  const route = useRoute();
   return (
     <>
       <header className="header">
@@ -13,8 +17,19 @@ export function App() {
         </nav>
       </header>
       <main className="page">
-        <QueuePage />
+        <Page route={route} />
       </main>
     </>
   );
+}
+
+function Page({ route }: Readonly<{ route: Route }>) {
+  switch (route.page) {
+    case "claim":
+      return <ClaimPage key={route.claimId} claimId={route.claimId} />;
+    case "instructions":
+      return <InstructionsPage />;
+    case "queue":
+      return <QueuePage />;
+  }
 }

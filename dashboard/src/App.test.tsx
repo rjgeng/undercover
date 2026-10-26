@@ -1,16 +1,34 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { App } from "./App";
-import { stubApi, summary } from "./testing";
+import { claimRecord, claimRoutes, stubApi, summary } from "./testing";
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  window.location.hash = "";
 });
 
-it("shows the header and the queue", async () => {
-  stubApi({ "/api/claims": [summary("CLM-1001")] });
+function go(hash: string) {
+  act(() => {
+    window.location.hash = hash;
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+  });
+}
+
+it("moves between the queue, a claim and the instructions", async () => {
+  stubApi({
+    ...claimRoutes(claimRecord()),
+    "/api/claims": [summary("CLM-1001")],
+    "/api/instructions": { text: "The instructions" },
+    "/api/policy-wording": { version: "2026.1", text: "The wording" },
+  });
   render(<App />);
-  expect(screen.getByRole("link", { name: "Instructions" })).toBeDefined();
-  expect(await screen.findByRole("link", { name: "CLM-1001" })).toBeDefined();
+  expect(
+    await screen.findByRole("heading", { name: "Claims queue" }),
+  ).toBeDefined();
+  go("#/claims/CLM-1001");
+  expect(await screen.findByText("Back to the queue")).toBeDefined();
+  go("#/instructions");
+  expect(await screen.findByText("The instructions")).toBeDefined();
 });

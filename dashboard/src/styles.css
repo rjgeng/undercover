@@ -165,3 +165,134 @@ tbody tr:nth-child(odd) {
 td.mono {
   white-space: nowrap;
 }
+
+h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.25rem;
+}
+
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.title h1 {
+  margin: 0;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 0 1.25rem;
+  align-items: start;
+}
+
+@media (width < 900px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1.25rem;
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.document h3 {
+  margin-bottom: 0;
+}
+
+.document p {
+  margin: 0.25rem 0 0;
+}
+
+.decision {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.history {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.steps li {
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+}
+
+.steps li:nth-child(odd) {
+  background: var(--stripe);
+}
+
+.steps summary {
+  cursor: pointer;
+}
+
+pre {
+  margin: 0.5rem 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+
+pre.text {
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.sign-off {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+select,
+button {
+  font: inherit;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+}
+
+select {
+  border: none;
+  background: var(--stripe);
+  color: var(--ink);
+}
+
+button {
+  border: none;
+  background: var(--sea-green);
+  color: var(--midnight);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

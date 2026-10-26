@@ -2,13 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 
 export const EVERY = 2000;
 
-export interface Polled<T> {
+export interface Loaded<T> {
   data: T | undefined;
   error: string | undefined;
   reload: () => void;
 }
 
-export function usePolling<T>(load: () => Promise<T>): Polled<T> {
+export function useApi<T>(load: () => Promise<T>, poll = true): Loaded<T> {
   const [data, setData] = useState<T>();
   const [error, setError] = useState<string>();
   const [tick, setTick] = useState(0);
@@ -32,12 +32,12 @@ export function usePolling<T>(load: () => Promise<T>): Polled<T> {
       );
     };
     refresh();
-    const timer = setInterval(refresh, EVERY);
+    const timer = poll ? setInterval(refresh, EVERY) : undefined;
     return () => {
       live = false;
       clearInterval(timer);
     };
-  }, [load, tick]);
+  }, [load, poll, tick]);
 
   return { data, error, reload };
 }

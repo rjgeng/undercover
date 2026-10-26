@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { EVERY, usePolling } from "./usePolling";
+import { EVERY, useApi } from "./useApi";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -12,7 +12,7 @@ it("loads now, then again every two seconds", async () => {
     .fn<() => Promise<number>>()
     .mockResolvedValueOnce(1)
     .mockResolvedValue(2);
-  const { result, unmount } = renderHook(() => usePolling(load));
+  const { result, unmount } = renderHook(() => useApi(load));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(result.current.data).toBe(1);
   await act(() => vi.advanceTimersByTimeAsync(EVERY));
@@ -28,7 +28,7 @@ it("reloads on request and reports errors", async () => {
     .mockRejectedValueOnce(new Error("Backend is down"))
     .mockRejectedValueOnce("odd")
     .mockResolvedValue(3);
-  const { result } = renderHook(() => usePolling(load));
+  const { result } = renderHook(() => useApi(load));
   await vi.waitFor(() => {
     expect(result.current.error).toBe("Backend is down");
   });
@@ -45,4 +45,12 @@ it("reloads on request and reports errors", async () => {
     expect(result.current.data).toBe(3);
   });
   expect(result.current.error).toBeUndefined();
+});
+
+it("loads once when not polling", async () => {
+  vi.useFakeTimers();
+  const load = vi.fn<() => Promise<number>>().mockResolvedValue(1);
+  renderHook(() => useApi(load, false));
+  await act(() => vi.advanceTimersByTimeAsync(EVERY * 3));
+  expect(load).toHaveBeenCalledTimes(1);
 });

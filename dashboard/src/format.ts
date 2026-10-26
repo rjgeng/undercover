@@ -12,6 +12,7 @@ const moment = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeStyle: "short",
 });
+const seconds = new Intl.DateTimeFormat("en-US", { timeStyle: "medium" });
 
 export const STATUS_LABELS: Record<Status, string> = {
   waiting: "Waiting",
@@ -36,6 +37,10 @@ export function date(iso: string): string {
 
 export function time(iso: string): string {
   return moment.format(new Date(iso));
+}
+
+export function clock(iso: string): string {
+  return seconds.format(new Date(iso));
 }
 
 export function label(code: string): string {

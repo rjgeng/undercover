@@ -1,7 +1,7 @@
 import { api, type Status } from "./api";
 import { date, decisionText, label, money } from "./format";
 import { StatusBadge } from "./StatusBadge";
-import { usePolling } from "./usePolling";
+import { useApi } from "./useApi";
 
 const STATES: Status[] = [
   "waiting",
@@ -11,7 +11,7 @@ const STATES: Status[] = [
 ];
 
 export function QueuePage() {
-  const { data: claims, error } = usePolling(api.claims);
+  const { data: claims, error } = useApi(api.claims);
 
   return (
     <>

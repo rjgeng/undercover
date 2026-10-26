@@ -203,20 +203,20 @@ The Playwright MCP server couldn't start here, because it needs Google Chrome an
 
 **Why:** this is where a handler checks the agent's work and takes the one action the pilot gives them, signing off.
 
-- [ ] Vitest tests cover the claim page in each state, the steps, the sign-off request, the instructions page and the missing-claim message.
-- [ ] An end-to-end test opens CLM-1001 and sees:
+- [x] Vitest tests cover the claim page in each state, the steps, the sign-off request, the instructions page and the missing-claim message.
+- [x] An end-to-end test opens CLM-1001 and sees:
   - its story, its three items and its four documents, including the text "Flight MA 611"
   - the Premium plan
   - the earlier claim CLM-0412
-- [ ] An end-to-end test opens CLM-1004, starts it through the API, posts two steps, and sees both appear in order without a reload.
-- [ ] An end-to-end test plays the agent on CLM-1002 through the API: it starts the claim, approves 1150.0, then tries to pay and gets 403. On the page it sees Waiting for sign-off, picks Dana Whitfield and clicks Sign off. It then sees Decided, signed off by Dana Whitfield, and Paid $1,150.00.
-- [ ] An end-to-end test opens the instructions page and finds the instructions with no editable field.
-- [ ] Through curl on the dev backend, CLM-1002 is started, given two steps and approved at 1150.0. Then, in the browser through the Playwright MCP server, in light and dark mode:
+- [x] An end-to-end test opens CLM-1004, starts it through the API, posts two steps, and sees both appear in order without a reload.
+- [x] An end-to-end test plays the agent on CLM-1002 through the API: it starts the claim, approves 1150.0, then tries to pay and gets 403. On the page it sees Waiting for sign-off, picks Dana Whitfield and clicks Sign off. It then sees Decided, signed off by Dana Whitfield, and Paid $1,150.00.
+- [x] An end-to-end test opens the instructions page and finds the instructions with no editable field.
+- [x] Through curl on the dev backend, CLM-1002 is started, given two steps and approved at 1150.0. Then, in the browser through the Playwright MCP server, in light and dark mode:
   - the claim page shows the decision, both steps, the Coral Waiting for sign-off badge with Midnight text, and the sign-off control
   - the instructions page shows the instructions and the wording
   - both pages keep phase 4's fonts and surfaces, with no console errors
   - `uv run -m backend.seed` resets the queue afterwards
-- [ ] `npm run check` passes.
+- [x] `npm run check` passes.
 
 ## Phase 6: The pilot end to end
 

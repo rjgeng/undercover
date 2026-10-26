@@ -1,6 +1,6 @@
 # Status
 
-The claims pilot, built in phases from `docs/PLAN.md`. Phases 1 to 4 of 6 are done.
+The claims pilot, built in phases from `docs/PLAN.md`. Phases 1 to 5 of 6 are done.
 
 ## What's built
 
@@ -8,8 +8,8 @@ The claims pilot, built in phases from `docs/PLAN.md`. Phases 1 to 4 of 6 are do
 - Working a claim: `start_claim`, `add_step`, `list_steps`, `record_decision`, `pay_claim` and `sign_off_claim`. A claim goes from `waiting` to `in_progress` to `decided`, or to `waiting_for_sign_off` when an approval is over $1,000.00. `pay_claim` refuses a payout over $1,000.00 with 403 until a handler signs off, and signing off pays it.
 - `get_instructions` serves the agent's instructions from `backend/instructions.md`.
 - `agent/`: the UnderCover Agent on `create_agent`. `run(claim_id, thread_id)` starts the claim, puts the instructions and the policy wording in the system prompt, and records each tool use and note as a step. Its five tools (`get_claim`, `get_policy`, `get_claim_history`, `record_decision`, `pay_claim`) each make one API call and give the backend's refusals back to the model as text. The model is `openai/gpt-6-luna` at low reasoning, or `MODEL_NAME`.
-- `dashboard/`: React on Vite in UnderCover's brand, light and dark. The queue page counts the claims in each state and lists every claim, refreshing every 2 seconds.
-- `e2e/`: Playwright tests of the queue. They start their own backend on port 8001, with the database `e2e/undercover.db` reseeded each run, and their own dashboard on 5174, so they never touch the queue you use with `npm run dev`.
+- `dashboard/`: React on Vite in UnderCover's brand, light and dark. The queue page counts the claims in each state and lists every claim, refreshing every 2 seconds. Each claim's page shows the claim in full with its documents, the policy, the customer's earlier claims, the decision with its reasons and payment, and the agent's steps as they arrive. A claim waiting for sign-off has a choice of handler and a button to sign off and pay. The instructions page shows the agent's instructions and the policy wording, read only.
+- `e2e/`: Playwright tests of the queue, a claim, the agent's steps, sign-off and the instructions. They start their own backend on port 8001, with the database `e2e/undercover.db` reseeded each run, and their own dashboard on 5174, so they never touch the queue you use with `npm run dev`.
 
 ## How to run it
 
