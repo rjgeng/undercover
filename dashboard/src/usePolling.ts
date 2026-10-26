@@ -1,0 +1,43 @@
+import { useCallback, useEffect, useState } from "react";
+
+export const EVERY = 2000;
+
+export interface Polled<T> {
+  data: T | undefined;
+  error: string | undefined;
+  reload: () => void;
+}
+
+export function usePolling<T>(load: () => Promise<T>): Polled<T> {
+  const [data, setData] = useState<T>();
+  const [error, setError] = useState<string>();
+  const [tick, setTick] = useState(0);
+  const reload = useCallback(() => {
+    setTick((n) => n + 1);
+  }, []);
+
+  useEffect(() => {
+    let live = true;
+    const refresh = () => {
+      load().then(
+        (value) => {
+          if (!live) return;
+          setData(value);
+          setError(undefined);
+        },
+        (reason: unknown) => {
+          if (live)
+            setError(reason instanceof Error ? reason.message : "Failed");
+        },
+      );
+    };
+    refresh();
+    const timer = setInterval(refresh, EVERY);
+    return () => {
+      live = false;
+      clearInterval(timer);
+    };
+  }, [load, tick]);
+
+  return { data, error, reload };
+}

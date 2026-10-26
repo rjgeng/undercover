@@ -1,0 +1,167 @@
+:root {
+  --sea-green: #06d6a0;
+  --marigold: #ffc145;
+  --coral: #f78c6b;
+  --cerulean: #118ab2;
+  --raspberry: #ef476f;
+  --midnight: #073b4c;
+  --sea-mist: #cdd8db;
+  --page: #f0f4f5;
+  --panel: #ffffff;
+  --ink: var(--midnight);
+  --muted: color-mix(in srgb, var(--ink) 72%, transparent);
+  --stripe: color-mix(in srgb, var(--ink) 5%, transparent);
+
+  color-scheme: light dark;
+  font-family: "Instrument Sans", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #04232e;
+    --panel: #000000;
+    --ink: var(--sea-mist);
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2 {
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 1.75rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+}
+
+.mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.9em;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 2rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 0;
+}
+
+.brand {
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.header nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 3rem;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.alert {
+  background: var(--raspberry);
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.1rem 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--midnight);
+}
+
+.badge.waiting {
+  background: var(--cerulean);
+  color: #ffffff;
+}
+
+.badge.in_progress {
+  background: var(--marigold);
+}
+
+.badge.waiting_for_sign_off {
+  background: var(--coral);
+}
+
+.badge.decided {
+  background: var(--sea-green);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1.25rem;
+}
+
+.count {
+  margin: 0.5rem 0 0;
+  font-size: 2rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+th,
+td {
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+}
+
+tbody tr:nth-child(odd) {
+  background: var(--stripe);
+}
+
+.number {
+  text-align: right;
+}
+
+td.mono {
+  white-space: nowrap;
+}

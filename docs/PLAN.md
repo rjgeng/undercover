@@ -175,15 +175,17 @@ Every operation has an `operation_id`, a one-line docstring and no optional inpu
 
 **Why:** the queue is the screen the team works from, and it sets the look and the plumbing the other pages reuse.
 
-- [ ] Vitest tests cover the queue's counts and rows from a stubbed API, each state's label, money and date formatting, and the routes.
-- [ ] An end-to-end test opens the queue and sees 25 claims, a count for each of the four states adding up to 25, and CLM-1001 with $420.00 and Waiting.
-- [ ] An end-to-end test opens the queue, starts CLM-1005 through the API, and sees its row change to In progress within 3 seconds without a reload.
-- [ ] With `npm run dev` running, localhost:5173 is checked in the browser through the Playwright MCP server, in light and dark mode:
+- [x] Vitest tests cover the queue's counts and rows from a stubbed API, each state's label, money and date formatting, and the routes.
+- [x] An end-to-end test opens the queue and sees 25 claims, a count for each of the four states adding up to 25, and CLM-1001 with $420.00 and Waiting.
+- [x] An end-to-end test opens the queue, starts CLM-1005 through the API, and sees its row change to In progress within 3 seconds without a reload.
+- [x] With `npm run dev` running, localhost:5173 is checked in the browser through the Playwright MCP server, in light and dark mode:
   - the queue is in Instrument Sans, with numbers and ids in JetBrains Mono
   - the page background is `#F0F4F5` in light mode and `#04232E` in dark mode, with white and black panels and Midnight and Sea Mist ink
   - no panel or header has an outline or a one-edge border, and there's no line across the top
-- [ ] With the queue open in the browser, `start_claim` on CLM-1001 is called through curl, and a later snapshot, taken without a reload, shows CLM-1001 as In progress. `uv run -m backend.seed` resets it afterwards.
-- [ ] `npm run check` passes, with TypeScript coverage at 80% or more.
+- [x] With the queue open in the browser, `start_claim` on CLM-1001 is called through curl, and a later snapshot, taken without a reload, shows CLM-1001 as In progress. `uv run -m backend.seed` resets it afterwards.
+- [x] `npm run check` passes, with TypeScript coverage at 80% or more.
+
+The Playwright MCP server couldn't start here, because it needs Google Chrome and Chrome isn't installed, so the browser checks in this phase and the next ran in the repo's own Playwright with its Chromium: light and dark mode, the computed fonts and colors, and screenshots.
 
 ## Phase 5: The claim page, the agent's steps, sign-off and the instructions
 

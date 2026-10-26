@@ -1,19 +1,20 @@
-import { useEffect, useState } from "react";
+import { QueuePage } from "./QueuePage";
 
 export function App() {
-  const [status, setStatus] = useState("checking");
-
-  useEffect(() => {
-    void fetch("/api/health")
-      .then((response) => (response.ok ? "up" : "down"))
-      .catch(() => "down")
-      .then(setStatus);
-  }, []);
-
   return (
-    <main>
-      <h1>UnderCover</h1>
-      <p>Backend: {status}</p>
-    </main>
+    <>
+      <header className="header">
+        <a className="brand" href="#/">
+          UnderCover
+        </a>
+        <nav aria-label="Main">
+          <a href="#/">Queue</a>
+          <a href="#/instructions">Instructions</a>
+        </nav>
+      </header>
+      <main className="page">
+        <QueuePage />
+      </main>
+    </>
   );
 }
