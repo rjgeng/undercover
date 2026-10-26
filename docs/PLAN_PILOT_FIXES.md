@@ -39,10 +39,10 @@ There are four phases. Each one ends with every check green, its criteria ticked
 
 **Why:** the agent should read the same refusals a person would, and a long run should show its progress.
 
-- [ ] A stub-model test records a decision with empty reasons, gets the plain refusal back, records it again with reasons and ends `decided`.
-- [ ] A stub-model test of a negative payout gets `Refused: payout: Input should be greater than or equal to 0`.
-- [ ] The existing agent tests pass with the new history operation, and the history step still shows CLM-0412 and no email.
-- [ ] `npm run check` passes.
+- [x] A stub-model test records a decision with empty reasons, gets the plain refusal back, records it again with reasons and ends `decided`.
+- [x] A stub-model test of a negative payout gets `Refused: payout: Input should be greater than or equal to 0`.
+- [x] The existing agent tests pass with the new history operation, and the history step still shows CLM-0412 and no email.
+- [x] `npm run check` passes.
 
 ## Phase 3: The dashboard shows loading, errors and decisions clearly
 

@@ -1,6 +1,6 @@
 # Status
 
-The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixes in `docs/PLAN_PILOT_FIXES.md` are under way: phase 1 of 4 is done.
+The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixes in `docs/PLAN_PILOT_FIXES.md` are under way: phases 1 and 2 of 4 are done.
 
 ## What's built
 
@@ -11,7 +11,7 @@ The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixe
   - Working a claim: `start_claim`, `add_step`, `list_steps`, `record_decision`, `pay_claim` and `sign_off_claim`. A claim goes from `waiting` to `in_progress`, then to `decided`, or to `waiting_for_sign_off` when an approval is over $1,000.00. `pay_claim` refuses a payout over $1,000.00 with 403 until a handler signs off, and signing off pays it. Each change takes the database's write lock before it checks the claim, so two requests can't both pass the same check.
 - `agent/`: the UnderCover Agent on `create_agent`.
   - `run(claim_id, thread_id)` starts the claim, puts the instructions from `backend/instructions.md` and the policy wording in the system prompt, and records each tool use and each note as a step.
-  - Its five tools are `get_claim`, `get_policy`, `get_claim_history`, `record_decision` and `pay_claim`. Each makes one API call, accepts only well-formed ids, and gives the backend's refusals back to the model as text.
+  - Its five tools are `get_claim`, `get_policy`, `get_claim_history`, `record_decision` and `pay_claim`. Each makes one API call, accepts only well-formed ids, and gives the backend's refusals back to the model as plain sentences, including FastAPI's input errors.
   - The model makes one tool call at a time. It's `openai/gpt-6-luna` at low reasoning, or the model in `MODEL_NAME`.
 - `dashboard/`: React on Vite, in UnderCover's brand, in light and dark mode.
   - The queue: a count of claims in each state and every claim's status and decision, refreshed every 2 seconds.

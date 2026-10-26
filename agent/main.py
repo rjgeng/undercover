@@ -53,11 +53,18 @@ def fetch(path: str) -> Any:
     return send("GET", path).raise_for_status().json()
 
 
+def refusal(detail: str | list[dict[str, Any]]) -> str:
+    """Put the backend's refusal, or FastAPI's list of input errors, into words."""
+    if isinstance(detail, str):
+        return detail
+    return "; ".join(f"{error['loc'][-1]}: {error['msg']}" for error in detail)
+
+
 def call(method: str, path: str, body: dict[str, Any] | None = None) -> str:
     """Call the backend for a tool, giving a refusal back as text, not an error."""
     response = send(method, path, body)
     if response.is_client_error:
-        return f"Refused: {response.json()['detail']}"
+        return f"Refused: {refusal(response.json()['detail'])}"
     return response.raise_for_status().text
 
 
@@ -181,7 +188,7 @@ def main(claim_ids: list[str]) -> None:
         status = found.json()["status"] if found.is_success else None
         if status != "waiting":
             where = LABELS[status] if status else "not in the queue"
-            print(f"{claim_id}: skipped, it's {where}")
+            print(f"{claim_id}: skipped, it's {where}", flush=True)
             continue
         run(claim_id, f"{claim_id}-{uuid4().hex[:8]}")
-        print(outcome(claim_id))
+        print(outcome(claim_id), flush=True)

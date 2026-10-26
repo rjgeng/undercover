@@ -42,14 +42,20 @@ def use(name: str, text: str = "", **args: object) -> AIMessage:
     )
 
 
-def decide(claim_id: str, decision: str, payout: float, text: str = "") -> AIMessage:
+def decide(
+    claim_id: str,
+    decision: str,
+    payout: float,
+    text: str = "",
+    reasons: str = "The reasons.",
+) -> AIMessage:
     return use(
         "record_decision",
         text,
         claim_id=claim_id,
         decision=decision,
         payout=payout,
-        reasons="The reasons.",
+        reasons=reasons,
         policy_section="Section 3, Trip Delay",
     )
 
@@ -130,6 +136,25 @@ def test_a_refused_decision_can_be_corrected(client):
     assert steps(client, "CLM-1001")[0]["detail"].endswith(
         "Refused: A decline or a referral has a payout of $0.00"
     )
+
+
+def test_validation_refusals_come_back_in_words(client):
+    model = stub(
+        use("get_claim", claim_id="CLM-1001"),
+        decide("CLM-1001", "approve", -5.0),
+        decide("CLM-1001", "approve", 420.0, reasons=" "),
+        decide("CLM-1001", "approve", 420.0),
+        AIMessage(content="Approved."),
+    )
+    main.run("CLM-1001", "thread-6", model)
+    tools = [s["detail"] for s in steps(client, "CLM-1001") if s["kind"] == "tool"]
+    assert tools[1].endswith(
+        "Refused: payout: Input should be greater than or equal to 0"
+    )
+    assert tools[2].endswith(
+        "Refused: reasons: String should have at least 1 character"
+    )
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "decided"
 
 
 def test_a_decline_pays_nothing(client):
