@@ -138,6 +138,21 @@ def test_a_refused_decision_can_be_corrected(client):
     )
 
 
+def test_an_approval_of_nothing_is_refused(client):
+    model = stub(
+        decide("CLM-1001", "approve", 0),
+        decide("CLM-1001", "decline", 0),
+        AIMessage(content="Declined."),
+    )
+    main.run("CLM-1001", "thread-3", model)
+    claim = client.get("/api/claims/CLM-1001").json()
+    assert claim["decision"] == "decline"
+    assert claim["paid_amount"] is None
+    assert steps(client, "CLM-1001")[0]["detail"].endswith(
+        "Refused: An approval has a payout above $0.00"
+    )
+
+
 def test_validation_refusals_come_back_in_words(client):
     model = stub(
         use("get_claim", claim_id="CLM-1001"),

@@ -128,9 +128,12 @@ def test_decline_and_refer_have_no_payout(client, decision):
     assert response.json()["detail"] == "A decline or a referral has a payout of $0.00"
 
 
-def test_an_approval_can_pay_nothing(client):
-    assert approved(client, "CLM-1001", 0)["status"] == "decided"
-    assert pay(client, "CLM-1001", 0).json()["paid_amount"] == 0
+def test_an_approval_has_a_payout(client):
+    start(client, "CLM-1001")
+    response = decide(client, "CLM-1001", "approve", 0)
+    assert response.status_code == 422
+    assert response.json()["detail"] == "An approval has a payout above $0.00"
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "in_progress"
 
 
 def test_the_queue_shows_decisions(client):

@@ -2,7 +2,7 @@
 
 The comparison of `week1day3-rj` with Ed's `week1day3-end`, checked claim by claim by a second agent, found places where Ed's build does better. This plan takes the ones `docs/` asks for, plus a few small dashboard touches that Ed's Day 3 build has and the student chose: the decided time, add-on names, the current page marked in the header and a larger alert. It builds on the pilot in `docs/PLAN.md` and keeps its decisions, except where a phase below changes one.
 
-There are four phases. Each one ends with every check green, its criteria ticked, `docs/STATUS.md` updated and a commit.
+There are five phases; the fifth was added after the second queue run, to settle a question it raised. Each one ends with every check green, its criteria ticked, `docs/STATUS.md` updated and a commit.
 
 ## Left out, and why
 
@@ -81,7 +81,29 @@ There are four phases. Each one ends with every check green, its criteria ticked
 - [x] The stub-model tests still pass.
 - [x] The agent skips a note whose text is blank, so a whitespace-only reply can't be refused as a step and end the run (found by the plan's review, after phase 1 made a step's detail required). A stub-model test covers it.
 - [x] `uv run -m backend.seed`, then `uv run -m agent` works all 25 claims on GPT-6 Luna at low reasoning, a few cents again. Every claim ends `decided` or `waiting_for_sign_off`.
-- [ ] Every approval of $1,000.00 or less is paid. All are except CLM-1024, which the agent approved at $0.00 and so had nothing to pay: the earlier claim CLM-0987 had already paid $250 for the same phone, and the $300 per-item limit less that and the $50 deductible leaves nothing. Whether an approval can have a $0.00 payout is a decision for UnderCover, raised in the report.
+- [ ] Every approval of $1,000.00 or less is paid. All are except CLM-1024, which the agent approved at $0.00 and so had nothing to pay: the earlier claim CLM-0987 had already paid $250 for the same phone, and the $300 per-item limit less that and the $50 deductible leaves nothing. Whether an approval can have a $0.00 payout is a decision for UnderCover, raised in the report. The answer was no, and phase 5 builds it.
 - [x] Every claim's first tool step is "Read the claim", and every policy and history read uses that claim's own policy id and customer id, checked from the recorded steps against `get_claim`.
 - [x] The run's time and its decisions (approve, decline, refer and held) go in `docs/STATUS.md` next to the first run's. They can't be scored, because that needs `data/evals/`.
+- [x] `npm run check` passes, and the results are reported.
+
+## Phase 5: An approval pays something, and a third queue run
+
+**Builds:**
+
+- **No approval at $0.00:** `record_decision` answers 422 with "An approval has a payout above $0.00", and the claim stays in progress. This changes decision 3 of `docs/PLAN.md`, which allowed it.
+- **The prompt**, with three changes, each from the spec or the wording:
+  - Step 5 says when to refer in the spec's words: when the claim needs someone's judgment or more information, such as a document the wording asks for that is missing (section 11).
+  - Step 6 adds that a pair or a set counts as one item for the per-item limit (section 5).
+  - Step 7 adds that an approval has a payout above $0.
+- The prompt doesn't say what to do when nothing is left to pay. The model decides between declining and referring from the wording, since the claims manual, whose practice is to decline, stays out of the pilot.
+
+**Why:** the spec has handlers "approve the claim with a payout", and the second run left CLM-1024 approved with nothing to pay, which reads as a claim still to be paid. The two prompt changes were found by the plan's review: step 5 left out "someone's judgment", and step 6 didn't say how a pair or a set counts. The prompt changes, so this phase runs the whole queue again.
+
+- [x] A test approves with a payout of 0 and gets 422 with "An approval has a payout above $0.00", and the claim stays in progress. The test that allowed it is gone.
+- [x] A stub-model test approves at 0, gets `Refused: An approval has a payout above $0.00` back, declines, and ends `decided` with no payment.
+- [x] On a freshly seeded database, starting CLM-1001 and approving it at 0 through `curl -s -w '\n%{http_code}\n'` prints the message and 422.
+- [x] `uv run -m backend.seed`, then `uv run -m agent` works all 25 claims on GPT-6 Luna at low reasoning. Every claim ends `decided` or `waiting_for_sign_off`.
+- [x] No approval is at $0.00, and every approval of $1,000.00 or less is paid exactly its payout.
+- [x] Every claim's first tool step is "Read the claim", and every policy and history read uses that claim's own policy id and customer id.
+- [x] The run's time and its decisions go in `docs/STATUS.md` next to the first two runs', with what became of CLM-1024.
 - [x] `npm run check` passes, and the results are reported.

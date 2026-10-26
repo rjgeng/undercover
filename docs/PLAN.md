@@ -27,7 +27,7 @@ UnderCover Agent (uv run -m agent) ─────┘ HTTP only                 
    | `waiting_for_sign_off` | `sign_off_claim` by a handler | `decided`, and paid |
 
    - **Decisions:** a decision is final, so a second one gets 409. A referral is a decision, so a referred claim is `decided` with the decision `refer`.
-   - **Amounts:** payouts and amounts are rounded to cents. A payout can't be negative, and a decline or referral must have a payout of zero (422 otherwise). An approval of $0.00 is allowed, since the deductible can leave nothing to pay. Exactly $1,000.00 needs no sign-off.
+   - **Amounts:** payouts and amounts are rounded to cents. A payout can't be negative, and a decline or referral must have a payout of zero (422 otherwise). An approval of $0.00 was allowed at first, since the deductible can leave nothing to pay; after the second queue run, an approval must have a payout above $0.00 (422 otherwise), as phase 5 of `docs/PLAN_PILOT_FIXES.md` sets out. Exactly $1,000.00 needs no sign-off.
    - **Paying:** `pay_claim` takes the amount. An approved claim over the limit that isn't signed off always gets 403, whatever the amount. Otherwise it gets 409 when the claim isn't approved, when the amount isn't the approved payout, or when it's already paid.
    - **Signing off:** sign-off needs a handler on record whose `can_approve_over_limit` is true (403 otherwise). It records who signed off and when, then pays the payout.
    - Payments are only recorded, never made.

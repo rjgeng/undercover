@@ -217,6 +217,8 @@ def record_decision(claim_id: str, body: NewDecision, conn: Conn) -> Claim:
         claim = find_claim(conn, claim_id)
         if claim.status != "in_progress":
             raise wrong_state(claim, "so it can't take a decision")
+        if body.decision == "approve" and not body.payout:
+            raise HTTPException(422, "An approval has a payout above $0.00")
         if body.decision != "approve" and body.payout:
             raise HTTPException(422, "A decline or a referral has a payout of $0.00")
         held = body.decision == "approve" and body.payout > LIMIT
