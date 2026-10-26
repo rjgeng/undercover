@@ -99,6 +99,16 @@ def test_policy_wording(client):
 def test_instructions(client):
     text = client.get("/api/instructions").json()["text"]
     assert text.startswith("# The UnderCover Agent")
+    for tool in [
+        "get_claim",
+        "get_policy",
+        "get_claim_history",
+        "record_decision",
+        "pay_claim",
+    ]:
+        assert f"`{tool}`" in text
+    for section in ["section 9", "section 10", "section 11"]:
+        assert section in text
     assert "manual" not in text
 
 

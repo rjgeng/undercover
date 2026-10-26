@@ -1,6 +1,6 @@
 # Status
 
-The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixes in `docs/PLAN_PILOT_FIXES.md` are under way: phases 1 to 3 of 4 are done.
+The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixes in `docs/PLAN_PILOT_FIXES.md` are built, apart from one open question about $0.00 approvals.
 
 ## What's built
 
@@ -10,7 +10,7 @@ The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixe
   - Decisions need reasons and a section, a start needs a thread id, and a step needs a title, a detail and a claim that has been started. Files are read as UTF-8.
   - Working a claim: `start_claim`, `add_step`, `list_steps`, `record_decision`, `pay_claim` and `sign_off_claim`. A claim goes from `waiting` to `in_progress`, then to `decided`, or to `waiting_for_sign_off` when an approval is over $1,000.00. `pay_claim` refuses a payout over $1,000.00 with 403 until a handler signs off, and signing off pays it. Each change takes the database's write lock before it checks the claim, so two requests can't both pass the same check.
 - `agent/`: the UnderCover Agent on `create_agent`.
-  - `run(claim_id, thread_id)` starts the claim, puts the instructions from `backend/instructions.md` and the policy wording in the system prompt, and records each tool use and each note as a step.
+  - `run(claim_id, thread_id)` starts the claim, puts the instructions from `backend/instructions.md` and the policy wording in the system prompt, and records each tool use and each note that isn't blank as a step. The instructions are a numbered procedure whose every rule cites the policy wording.
   - Its five tools are `get_claim`, `get_policy`, `get_claim_history`, `record_decision` and `pay_claim`. Each makes one API call, accepts only well-formed ids, and gives the backend's refusals back to the model as plain sentences, including FastAPI's input errors.
   - The model makes one tool call at a time. It's `openai/gpt-6-luna` at low reasoning, or the model in `MODEL_NAME`.
 - `dashboard/`: React on Vite, in UnderCover's brand, in light and dark mode.
@@ -20,9 +20,11 @@ The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixe
   - Every panel shows "Loading" or its error, so a failed load never reads as empty, and an error shows even after a page has loaded. A decline or referral shows no payout, a decision shows when it was recorded, and add-ons show their names from the policy wording.
 - `e2e/`: Playwright tests of the queue, a claim, the agent's steps, sign-off and the instructions. They start their own backend on port 8001, with `e2e/undercover.db` reseeded on each `npm run e2e`, and their own dashboard on 5174, so they never touch the queue you use with `npm run dev`. Playwright's UI mode and the VS Code extension keep those servers running between runs, so restart them before running the tests again.
 
-## The first run of the whole queue
+## Runs of the whole queue
 
-On October 25, 2026, `uv run -m agent` worked all 25 claims on GPT-6 Luna at low reasoning, in about 8 minutes. It approved 16 (13 paid, and 3 over $1,000.00 held for sign-off: CLM-1003, CLM-1008 and CLM-1011), declined 6 and referred 3, with none left waiting or in progress. CLM-1011 was then signed off in the dashboard and paid. Its accuracy against the handlers' decisions in `data/evals/` hasn't been measured. The queue has been reseeded since that run.
+**First run.** On October 25, 2026, `uv run -m agent` worked all 25 claims on GPT-6 Luna at low reasoning, in about 8 minutes. It approved 16 (13 paid, and 3 over $1,000.00 held for sign-off: CLM-1003, CLM-1008 and CLM-1011), declined 6 and referred 3, with none left waiting or in progress. CLM-1011 was then signed off in the dashboard and paid. Its accuracy against the handlers' decisions in `data/evals/` hasn't been measured. The queue was reseeded after that run.
+
+**Second run, with the procedural prompt.** Later on October 25, 2026, `uv run -m agent` worked all 25 claims in 4 minutes 54 seconds, against the first run's 8 minutes, although the model now makes one tool call at a time. It approved 17, declined 5 and referred 3, with none left waiting or in progress. Of the approvals, 13 were paid, 3 were held for sign-off (CLM-1003 at $3,750, CLM-1008 at $2,240 and CLM-1011 at $1,330), and CLM-1024 was approved at $0.00. For CLM-1024, the claim history showed $250 already paid for the same phone, so nothing was left to pay. Every claim was read first, and its policy and history were read with its own ids. These decisions are in the database now, and they haven't been scored either.
 
 ## How to run it
 

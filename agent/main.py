@@ -137,7 +137,7 @@ def record(claim_id: str, message: AnyMessage, calls: dict[str, ToolCall]) -> No
             "title": TITLES.get(used["name"], used["name"]),
             "detail": f"{json.dumps(used['args'])}\n\n{message.text}",
         }
-    elif message.text:
+    elif message.text.strip():
         step = {"kind": "note", "title": "Note", "detail": message.text}
     else:
         return

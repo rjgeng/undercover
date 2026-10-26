@@ -9,6 +9,7 @@ There are four phases. Each one ends with every check green, its criteria ticked
 - **The queue run carrying on after a failed claim.** Ed's build does this, but it belongs to the Week 1 Day 5 brief ("One bad claim must never stop the run").
 - **Ed's prompt lines taken from the claims manual.** Two of them closely paraphrase `data/claims_manual.md`, which the spec keeps out of the pilot. Phase 4 takes the shape of Ed's prompt, a procedure, but takes its rules only from the policy wording and the spec.
 - **React Router, a typed error class and a total row for the items.** The comparison found these differences matter little.
+- **The Waiting badge's contrast.** White on Cerulean is 3.96 to 1, short of WCAG AA's 4.5 for small text, but `docs/BRAND.md` sets that pairing. It's a choice for UnderCover, not a fix to make here.
 
 ## Phase 1: The backend refuses bad input and serves no personal data
 
@@ -33,7 +34,7 @@ There are four phases. Each one ends with every check green, its criteria ticked
 
 **Builds:**
 
-- `get_claim_history` calls the new operation, and passes its answer straight through.
+- `get_claim_history` calls the new operation, and passes its answer straight through (built in phase 1).
 - When a refusal's detail is FastAPI's list of validation errors, the tool turns it into plain text, such as `Refused: payout: Input should be greater than or equal to 0`, rather than a Python list.
 - The command line flushes each line as it prints, so a run in the background shows each claim as it finishes.
 
@@ -51,7 +52,7 @@ There are four phases. Each one ends with every check green, its criteria ticked
 - **Loading and errors in every panel:** one small component shows "Loading" with `role="status"` or the error with `role="alert"`. It's used in the policy, customer history and steps panels and on the instructions page, so a failed load never reads as "No steps yet." The claim page also shows an error that comes after the claim has loaded, as the queue does.
 - **The decision:** a decline or referral shows no payout, and the panel shows when the decision was made.
 - **Sign-off:** the button stays disabled after a successful sign-off, so a second click can't send a second request.
-- **Names:** add-ons show their names from the policy wording (Adventure Sports, Pre-Existing Condition Waiver, Electronics Plus), and the customer panel takes the name from the claim and the earlier claims from the new operation.
+- **Names:** add-ons show their names from the policy wording (Adventure Sports, Pre-Existing Condition Waiver, Electronics Plus), and the customer panel takes the name from the claim and the earlier claims from the new operation (built in phase 1).
 - **The alert:** it stays Raspberry with white text, as `docs/BRAND.md` says, but in large bold text, which is what WCAG AA asks of white on Raspberry (3.6 to 1 passes for large text).
 - **Navigation:** the header link for the current page has `aria-current="page"`.
 
@@ -68,17 +69,19 @@ There are four phases. Each one ends with every check green, its criteria ticked
 
 1. Read the claim with `get_claim`. It gives the policy id and the customer id, so never guess them.
 2. Read the policy and the claim history with those ids.
-3. Check that the incident falls within the covered trip (sections 9 and 12) and that the claim was filed within 90 days of it (section 11).
-4. Find the benefit the claim falls under, and check its conditions and exclusions, the general exclusions (section 9) and any add-on on the policy (section 8).
+3. Check that the claim was filed within 90 days of the incident (section 11).
+4. Find the benefit the claim falls under, and check its conditions and exclusions, the general exclusions (section 9) and any add-on on the policy (section 8). This includes the dates: most benefits cover events during the covered trip (sections 9 and 12), but Trip Cancellation covers events before the trip starts (section 2), and Trip Delay cover continues until you get home (section 3).
 5. Decide. The goal is to handle claims straight through (the spec), so refer only when a document the wording asks for is missing (section 11) or the wording doesn't settle the claim.
-6. For an approval, work out the payout step by step as section 10 sets out: each item up to the per-item limit, less what a carrier or anyone else paid, less the deductible where section 1 applies it, up to the benefit's maximum.
+6. For an approval, work out the payout step by step as section 10 sets out: each item's eligible amount, with the per-item limit only for belongings (section 5) and Electronics Plus raising it for electronics (section 8); less what a carrier or anyone else paid; less the deductible where section 1 applies it; up to the benefit's maximum, which for cancellation and interruption is the trip cost or the plan maximum, whichever is lower (section 2).
 7. Record the decision with two or three sentences and the section. Then pay an approval, except one over $1,000, which waits for a handler.
 
 **Why:** the first run's model guessed ids before reading the claim, and the comparison suggests a procedure helps a small model at low effort. The decisions may change, so this phase runs the whole queue again.
 
-- [ ] A test checks the instructions name the five tools, mention sections 9, 10 and 11, and don't mention the manual.
-- [ ] The stub-model tests still pass.
-- [ ] `uv run -m backend.seed`, then `uv run -m agent` works all 25 claims on GPT-6 Luna at low reasoning, a few cents again. Every claim ends `decided` or `waiting_for_sign_off`, and every approval of $1,000.00 or less is paid.
-- [ ] Every claim's first step is "Read the claim", and no step is a refusal for a guessed id.
-- [ ] The run's time and its decisions (approve, decline, refer and held) go in `docs/STATUS.md` next to the first run's. They can't be scored, because that needs `data/evals/`.
-- [ ] `npm run check` passes, and the results are reported.
+- [x] A test checks the instructions name the five tools, mention sections 9, 10 and 11, and don't mention the manual.
+- [x] The stub-model tests still pass.
+- [x] The agent skips a note whose text is blank, so a whitespace-only reply can't be refused as a step and end the run (found by the plan's review, after phase 1 made a step's detail required). A stub-model test covers it.
+- [x] `uv run -m backend.seed`, then `uv run -m agent` works all 25 claims on GPT-6 Luna at low reasoning, a few cents again. Every claim ends `decided` or `waiting_for_sign_off`.
+- [ ] Every approval of $1,000.00 or less is paid. All are except CLM-1024, which the agent approved at $0.00 and so had nothing to pay: the earlier claim CLM-0987 had already paid $250 for the same phone, and the $300 per-item limit less that and the $50 deductible leaves nothing. Whether an approval can have a $0.00 payout is a decision for UnderCover, raised in the report.
+- [x] Every claim's first tool step is "Read the claim", and every policy and history read uses that claim's own policy id and customer id, checked from the recorded steps against `get_claim`.
+- [x] The run's time and its decisions (approve, decline, refer and held) go in `docs/STATUS.md` next to the first run's. They can't be scored, because that needs `data/evals/`.
+- [x] `npm run check` passes, and the results are reported.

@@ -157,6 +157,35 @@ def test_validation_refusals_come_back_in_words(client):
     assert client.get("/api/claims/CLM-1001").json()["status"] == "decided"
 
 
+def test_several_input_errors_come_back_together(client):
+    client.post("/api/claims/CLM-1001/start", json={"thread_id": "t-8"})
+    reply = main.record_decision.invoke(
+        {
+            "claim_id": "CLM-1001",
+            "decision": "approve",
+            "payout": 420.0,
+            "reasons": " ",
+            "policy_section": "",
+        }
+    )
+    assert reply == (
+        "Refused: reasons: String should have at least 1 character;"
+        " policy_section: String should have at least 1 character"
+    )
+
+
+def test_blank_text_from_the_model_is_not_a_step(client):
+    model = stub(
+        use("get_claim", "\n\n", claim_id="CLM-1001"),
+        decide("CLM-1001", "decline", 0, text=" "),
+        AIMessage(content="Declined."),
+    )
+    main.run("CLM-1001", "thread-7", model)
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "decided"
+    notes = [s["detail"] for s in steps(client, "CLM-1001") if s["kind"] == "note"]
+    assert notes == ["Declined."]
+
+
 def test_a_decline_pays_nothing(client):
     model = stub(decide("CLM-1001", "decline", 0), AIMessage(content="Declined."))
     main.run("CLM-1001", "thread-4", model)
