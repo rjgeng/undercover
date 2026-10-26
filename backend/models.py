@@ -119,6 +119,10 @@ class PolicyWording(BaseModel):
     text: str
 
 
+class Instructions(BaseModel):
+    text: str
+
+
 class StartClaim(BaseModel):
     thread_id: str
 

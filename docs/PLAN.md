@@ -132,24 +132,24 @@ Every operation has an `operation_id`, a one-line docstring and no optional inpu
 - **The command line:** `agent/__main__.py`. `uv run -m agent` works every waiting claim in turn, each on a new thread id, and `uv run -m agent CLM-1001 CLM-1004` works just those claims. It prints a line per claim:
   - `CLM-1001: approve $420.00 (decided, paid)`
   - `CLM-1002: approve $1,150.00 (waiting for sign-off)`
-  - `CLM-1007: no decision (in_progress)` when the model stops without recording one, and the command line moves on to the next claim
-  - a claim that isn't waiting is skipped with the backend's message
+  - `CLM-1007: no decision (in progress)` when the model stops without recording one, and the command line moves on to the next claim
+  - a claim that isn't waiting is skipped with where it stands, such as `CLM-1003: skipped, it's decided`
 - **Tests** with a stub model, against the backend on a temporary database.
 
 **Why:** the harness keeps the parts that must always happen in code: starting the claim, loading the wording and recording steps. It leaves the decision to the model, through tools that can only go through the API.
 
-- [ ] A stub-model test on CLM-1001 reads the claim, the policy and the history, approves 420.0 and pays it. The claim ends `decided` and paid, with the steps "Read the claim", "Read the policy", "Read the claim history", "Record the decision" and "Pay the claim" in that order.
-- [ ] A stub-model test approves 1150.0 on CLM-1002 and then tries to pay. It gets the refusal back as the tool result, and the claim ends `waiting_for_sign_off` with no payment.
-- [ ] A stub-model test refers CLM-1001 with a payout of 50.0 and gets the 422 message back as the tool result. It then refers it with a payout of zero, and the claim ends `decided`.
-- [ ] A stub-model test of a decline ends `decided` with a payout of zero and no payment.
-- [ ] Tests of the command line cover working the queue, working named claims, skipping a claim that isn't waiting, and a claim left with no decision.
-- [ ] `curl -s localhost:8000/api/instructions` returns the instructions, and they don't mention the claims manual.
-- [ ] A live run, `uv run -m agent CLM-1001`, prints a decision line. It's one claim on the real model and costs well under a cent. Then:
+- [x] A stub-model test on CLM-1001 reads the claim, the policy and the history, approves 420.0 and pays it. The claim ends `decided` and paid, with the steps "Read the claim", "Read the policy", "Read the claim history", "Record the decision" and "Pay the claim" in that order.
+- [x] A stub-model test approves 1150.0 on CLM-1002 and then tries to pay. It gets the refusal back as the tool result, and the claim ends `waiting_for_sign_off` with no payment.
+- [x] A stub-model test refers CLM-1001 with a payout of 50.0 and gets the 422 message back as the tool result. It then refers it with a payout of zero, and the claim ends `decided`.
+- [x] A stub-model test of a decline ends `decided` with a payout of zero and no payment.
+- [x] Tests of the command line cover working the queue, working named claims, skipping a claim that isn't waiting, and a claim left with no decision.
+- [x] `curl -s localhost:8000/api/instructions` returns the instructions, and they don't mention the claims manual.
+- [x] A live run, `uv run -m agent CLM-1001`, prints a decision line. It's one claim on the real model and costs well under a cent. Then:
   - `get_claim` shows a decision, reasons of two or three sentences and a policy section.
   - If the decision is an approval of $1,000.00 or less, `get_claim` shows a payment equal to the payout.
   - `list_steps` shows "Read the claim", "Read the policy" and "Read the claim history" before "Record the decision".
   - `uv run -m backend.seed` resets the queue afterwards.
-- [ ] `npm run check` passes.
+- [x] `npm run check` passes.
 
 ## Phase 4: The dashboard and the queue
 

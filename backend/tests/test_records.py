@@ -74,6 +74,12 @@ def test_policy_wording(client):
     assert wording["text"].startswith("# UnderCover Travel Insurance: Policy Wording")
 
 
+def test_instructions(client):
+    text = client.get("/api/instructions").json()["text"]
+    assert text.startswith("# The UnderCover Agent")
+    assert "manual" not in text
+
+
 def test_reseed_resets_the_queue_in_place(client):
     with sqlite3.connect(db.path()) as conn:
         conn.execute("UPDATE claims SET status = 'decided'")

@@ -5,6 +5,7 @@ import sqlite3
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -15,6 +16,7 @@ from backend.models import (
     ClaimSummary,
     Customer,
     Handler,
+    Instructions,
     NewDecision,
     NewStep,
     Payment,
@@ -142,6 +144,12 @@ def get_policy_wording() -> PolicyWording:
         version=COMPANY["policy_wording_version"],
         text=(db.DATA / "policy_wording.md").read_text(),
     )
+
+
+@app.get("/api/instructions", operation_id="get_instructions")
+def get_instructions() -> Instructions:
+    """Get the UnderCover Agent's instructions."""
+    return Instructions(text=(Path(__file__).parent / "instructions.md").read_text())
 
 
 @app.post("/api/claims/{claim_id}/start", operation_id="start_claim")
