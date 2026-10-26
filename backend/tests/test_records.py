@@ -1,5 +1,3 @@
-import sqlite3
-
 from fastapi.testclient import TestClient
 
 from backend import db
@@ -81,10 +79,19 @@ def test_instructions(client):
 
 
 def test_reseed_resets_the_queue_in_place(client):
-    with sqlite3.connect(db.path()) as conn:
+    conn = db.connect()
+    with conn:
         conn.execute("UPDATE claims SET status = 'decided'")
     seed()
-    assert {c["status"] for c in client.get("/api/claims").json()} == {"waiting"}
+    statuses = {row[0] for row in conn.execute("SELECT status FROM claims")}
+    conn.close()
+    assert statuses == {"waiting"}
+
+
+def test_backend_keeps_an_existing_database(client):
+    client.post("/api/claims/CLM-1001/start", json={"thread_id": "t-1"})
+    with TestClient(app) as started:
+        assert started.get("/api/claims/CLM-1001").json()["status"] == "in_progress"
 
 
 def test_backend_seeds_a_missing_database(tmp_path, monkeypatch):

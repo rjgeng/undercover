@@ -6,7 +6,11 @@ from pydantic import AfterValidator, BaseModel, Field
 
 Status = Literal["waiting", "in_progress", "waiting_for_sign_off", "decided"]
 Decision = Literal["approve", "decline", "refer"]
-Money = Annotated[float, Field(ge=0), AfterValidator(lambda amount: round(amount, 2))]
+Money = Annotated[
+    float,
+    Field(ge=0, allow_inf_nan=False),
+    AfterValidator(lambda amount: round(amount, 2)),
+]
 
 
 class Item(BaseModel):

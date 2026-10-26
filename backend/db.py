@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 DATA = Path(__file__).parents[1] / "data"
 DEFAULT_PATH = Path(__file__).parent / "undercover.db"
@@ -21,6 +22,6 @@ def connect() -> sqlite3.Connection:
     return conn
 
 
-def load(name: str) -> list[dict[str, str]]:
+def load(name: str) -> list[dict[str, Any]]:
     """Read one of the JSON files in data/."""
     return json.loads((DATA / name).read_text())

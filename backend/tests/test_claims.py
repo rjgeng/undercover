@@ -3,7 +3,8 @@ import sqlite3
 
 import pytest
 
-from backend import db
+from backend import db, main
+from backend.models import NewDecision, Payment, SignOff, StartClaim
 
 REFUSAL = "A payout over $1,000.00 needs a handler's sign-off."
 
@@ -111,14 +112,34 @@ def test_decision_refusals(client):
     assert decide(client, "CLM-1001", "approve", 420.0).status_code == 409
     start(client, "CLM-1001")
     assert decide(client, "CLM-1001", "approve", -50.0).status_code == 422
-    response = decide(client, "CLM-1001", "refer", 50.0)
-    assert response.status_code == 422
-    assert response.json()["detail"] == "A decline or a referral has a payout of $0.00"
     decide(client, "CLM-1001", "decline", 0)
     response = decide(client, "CLM-1001", "approve", 420.0)
     assert response.status_code == 409
     assert response.json()["detail"] == (
         "Claim CLM-1001 is decided, so it can't take a decision"
+    )
+
+
+@pytest.mark.parametrize("decision", ["decline", "refer"])
+def test_decline_and_refer_have_no_payout(client, decision):
+    start(client, "CLM-1001")
+    response = decide(client, "CLM-1001", decision, 50.0)
+    assert response.status_code == 422
+    assert response.json()["detail"] == "A decline or a referral has a payout of $0.00"
+
+
+def test_an_approval_can_pay_nothing(client):
+    assert approved(client, "CLM-1001", 0)["status"] == "decided"
+    assert pay(client, "CLM-1001", 0).json()["paid_amount"] == 0
+
+
+def test_the_queue_shows_decisions(client):
+    approved(client, "CLM-1001", 420.0)
+    claim = client.get("/api/claims").json()[0]
+    assert (claim["status"], claim["decision"], claim["payout"]) == (
+        "decided",
+        "approve",
+        420.0,
     )
 
 
@@ -192,3 +213,34 @@ def test_steps_come_back_in_order(client):
     assert [s["title"] for s in steps] == ["Read the claim", "Read the policy"]
     assert steps[0]["step_id"] < steps[1]["step_id"]
     assert client.get("/api/claims/CLM-9999/steps").status_code == 404
+
+
+DECISION = NewDecision(
+    decision="approve", payout=420.0, reasons="The reasons.", policy_section="3"
+)
+WRITES = {
+    "start_claim": lambda conn: main.start_claim(
+        "CLM-1001", StartClaim(thread_id="t-2"), conn
+    ),
+    "record_decision": lambda conn: main.record_decision("CLM-1002", DECISION, conn),
+    "pay_claim": lambda conn: main.pay_claim("CLM-1001", Payment(amount=1.0), conn),
+    "sign_off_claim": lambda conn: main.sign_off_claim(
+        "CLM-1001", SignOff(handler_id="HND-01"), conn
+    ),
+}
+
+
+@pytest.mark.parametrize("write", WRITES.values(), ids=WRITES.keys())
+def test_writes_take_the_lock_before_they_check(client, write):
+    start(client, "CLM-1001")
+    other = db.connect()
+    other.execute("BEGIN IMMEDIATE")
+    conn = db.connect()
+    conn.execute("PRAGMA busy_timeout = 0")
+    try:
+        with pytest.raises(sqlite3.OperationalError, match="locked"):
+            write(conn)
+    finally:
+        other.rollback()
+        other.close()
+        conn.close()

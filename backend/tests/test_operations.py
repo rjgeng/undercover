@@ -6,6 +6,8 @@ from backend.main import app
 def test_every_operation_follows_the_tech_stack():
     routes = [route for route in app.routes if isinstance(route, APIRoute)]
     assert routes
+    ids = [route.operation_id for route in routes]
+    assert len(ids) == len(set(ids))
     for route in routes:
         assert route.operation_id, route.path
         assert route.description, route.path
