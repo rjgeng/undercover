@@ -1,9 +1,10 @@
 import { api } from "./api";
+import { Pending } from "./Pending";
 import { useApi } from "./useApi";
 
 export function InstructionsPage() {
-  const { data: instructions } = useApi(api.instructions, false);
-  const { data: wording } = useApi(api.wording, false);
+  const instructions = useApi(api.instructions, false);
+  const wording = useApi(api.wording, false);
   return (
     <>
       <h1>The agent&apos;s instructions</h1>
@@ -13,11 +14,21 @@ export function InstructionsPage() {
       </p>
       <div className="columns">
         <section className="panel" aria-label="Instructions">
-          <pre className="text">{instructions?.text}</pre>
+          {instructions.data ? (
+            <pre className="text">{instructions.data.text}</pre>
+          ) : (
+            <Pending error={instructions.error} />
+          )}
         </section>
         <section className="panel" aria-label="Policy wording">
-          <h2>Policy wording, version {wording?.version}</h2>
-          <pre className="text">{wording?.text}</pre>
+          {wording.data ? (
+            <>
+              <h2>Policy wording, version {wording.data.version}</h2>
+              <pre className="text">{wording.data.text}</pre>
+            </>
+          ) : (
+            <Pending error={wording.error} />
+          )}
         </section>
       </div>
     </>

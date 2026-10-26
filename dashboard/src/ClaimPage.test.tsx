@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -8,7 +9,8 @@ import {
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ClaimPage } from "./ClaimPage";
-import { claimRecord, claimRoutes, step, stubApi } from "./testing";
+import { claimRecord, claimRoutes, POLICY, step, stubApi } from "./testing";
+import { EVERY } from "./useApi";
 
 afterEach(() => {
   cleanup();
@@ -44,7 +46,7 @@ it("shows a waiting claim in full", async () => {
   expect(
     screen.getByText("The agent hasn't started on this claim."),
   ).toBeDefined();
-  expect(screen.getByText("No steps yet.")).toBeDefined();
+  expect(await screen.findByText("No steps yet.")).toBeDefined();
   const policy = screen.getByRole("region", { name: "Policy" });
   expect(await within(policy).findByText("Premium")).toBeDefined();
   expect(within(policy).getByText("None")).toBeDefined();
@@ -105,6 +107,15 @@ it("signs off a payout over the limit", async () => {
       expect.objectContaining({ body: '{"handler_id":"HND-01"}' }),
     );
   });
+  const claimLoads = () =>
+    fetch.mock.calls.filter(([path]) => path === "/api/claims/CLM-1001").length;
+  const before = claimLoads();
+  await waitFor(() => {
+    expect(claimLoads()).toBeGreaterThan(before);
+  });
+  expect(
+    screen.getByRole("button", { name: /Sign off and pay/ }),
+  ).toHaveProperty("disabled", true);
 });
 
 it("says why a sign-off was refused", async () => {
@@ -150,12 +161,74 @@ it("shows an approval not yet paid, and a decline", async () => {
   cleanup();
   stubApi(
     claimRoutes(
-      claimRecord({ status: "decided", decision: "decline", payout: 0 }),
+      claimRecord({
+        status: "decided",
+        decision: "decline",
+        payout: 0,
+        decided_at: "2026-10-26T02:24:47+00:00",
+      }),
     ),
   );
   render(<ClaimPage claimId="CLM-1001" />);
-  expect(await screen.findByText("Declined")).toBeDefined();
+  const decision = await screen.findByRole("region", { name: "Decision" });
+  expect(within(decision).getByText("Declined")).toBeDefined();
+  expect(within(decision).queryByText(/\$0\.00/)).toBeNull();
+  expect(within(decision).getByText(/Recorded on/)).toBeDefined();
   expect(screen.queryByText("Not paid yet.")).toBeNull();
+});
+
+it("shows each panel loading, then the error when its load fails", async () => {
+  stubApi({ "/api/claims/CLM-1001": claimRecord() });
+  render(<ClaimPage claimId="CLM-1001" />);
+  expect(screen.getByRole("status").textContent).toBe("Loading");
+  await screen.findByText("My flight home from Rome was canceled.");
+  for (const [name, path] of [
+    ["Policy", "/api/policies/POL-2001"],
+    ["Customer", "/api/customers/CUS-3001/claims"],
+    ["The agent's steps", "/api/claims/CLM-1001/steps"],
+  ]) {
+    const panel = screen.getByRole("region", { name });
+    expect((await within(panel).findByRole("alert")).textContent).toBe(
+      `Nothing at ${path}`,
+    );
+  }
+  expect(screen.queryByText("No steps yet.")).toBeNull();
+});
+
+it("shows an error that comes after the claim has loaded", async () => {
+  vi.useFakeTimers();
+  stubApi(claimRoutes(claimRecord()));
+  render(<ClaimPage claimId="CLM-1001" />);
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(
+    screen.getByText("My flight home from Rome was canceled."),
+  ).toBeDefined();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(new Response("", { status: 502 })),
+  );
+  await act(() => vi.advanceTimersByTimeAsync(EVERY));
+  expect(screen.getAllByRole("alert")[0]?.textContent).toBe(
+    "The backend isn't responding (502)",
+  );
+  expect(
+    screen.getByText("My flight home from Rome was canceled."),
+  ).toBeDefined();
+  vi.useRealTimers();
+});
+
+it("names the add-ons as the policy wording does", async () => {
+  stubApi({
+    ...claimRoutes(claimRecord()),
+    "/api/policies/POL-2001": {
+      ...POLICY,
+      add_ons: ["electronics_plus", "pre_existing_waiver"],
+    },
+  });
+  render(<ClaimPage claimId="CLM-1001" />);
+  expect(
+    await screen.findByText("Electronics Plus, Pre-Existing Condition Waiver"),
+  ).toBeDefined();
 });
 
 it("says when a claim doesn't exist", async () => {

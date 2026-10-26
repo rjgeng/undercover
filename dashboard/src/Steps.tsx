@@ -1,17 +1,18 @@
 import { useCallback } from "react";
 import { api } from "./api";
 import { clock } from "./format";
+import { Pending } from "./Pending";
 import { useApi } from "./useApi";
 
 export function Steps({ claimId }: Readonly<{ claimId: string }>) {
   const load = useCallback(() => api.steps(claimId), [claimId]);
-  const { data: steps = [] } = useApi(load);
+  const { data: steps, error } = useApi(load);
   return (
     <section className="panel" aria-label="The agent's steps">
       <h2>The agent&apos;s steps</h2>
-      {steps.length === 0 ? (
-        <p className="muted">No steps yet.</p>
-      ) : (
+      {(!steps || error) && <Pending error={error} />}
+      {steps?.length === 0 && <p className="muted">No steps yet.</p>}
+      {steps && steps.length > 0 && (
         <ol className="steps">
           {steps.map((step) => (
             <li key={step.step_id}>

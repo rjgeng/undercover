@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { api, type Claim, type Handler } from "./api";
-import { date, DECISION_LABELS, label, money, time } from "./format";
+import { addOn, date, DECISION_LABELS, label, money, time } from "./format";
+import { Pending } from "./Pending";
 import { SignOff } from "./SignOff";
 import { StatusBadge } from "./StatusBadge";
 import { Steps } from "./Steps";
@@ -11,20 +12,13 @@ export function ClaimPage({ claimId }: Readonly<{ claimId: string }>) {
   const { data: claim, error, reload } = useApi(loadClaim);
   const { data: handlers = [] } = useApi(api.handlers, false);
 
-  if (!claim) {
-    return error ? (
-      <p className="alert" role="alert">
-        {error}
-      </p>
-    ) : (
-      <p className="muted">Loading the claim</p>
-    );
-  }
+  if (!claim) return <Pending error={error} />;
   return (
     <>
       <p>
         <a href="#/">Back to the queue</a>
       </p>
+      {error && <Pending error={error} />}
       <div className="title">
         <h1>
           <span className="mono">{claim.claim_id}</span> {claim.summary}
@@ -120,11 +114,18 @@ function DecisionPanel({
       ) : (
         <>
           <p className="decision">
-            {DECISION_LABELS[claim.decision]}{" "}
-            <span className="mono">{money(claim.payout ?? 0)}</span>
+            {DECISION_LABELS[claim.decision]}
+            {claim.decision === "approve" && (
+              <span className="mono"> {money(claim.payout ?? 0)}</span>
+            )}
           </p>
           <p>{claim.reasons}</p>
           <p className="muted">Policy section: {claim.policy_section}</p>
+          {claim.decided_at && (
+            <p className="muted">
+              Recorded on <span className="mono">{time(claim.decided_at)}</span>
+            </p>
+          )}
           {claim.signed_off_at && (
             <p>
               Signed off by {signer?.name ?? claim.signed_off_by} on{" "}
@@ -158,18 +159,19 @@ function Payment({ claim }: Readonly<{ claim: Claim }>) {
 
 function PolicyPanel({ policyId }: Readonly<{ policyId: string }>) {
   const load = useCallback(() => api.policy(policyId), [policyId]);
-  const { data: policy } = useApi(load, false);
+  const { data: policy, error } = useApi(load, false);
   return (
     <section className="panel" aria-label="Policy">
       <h2>
         Policy <span className="mono">{policyId}</span>
       </h2>
+      {!policy && <Pending error={error} />}
       {policy && (
         <dl className="facts">
           <dt>Plan</dt>
           <dd>{label(policy.plan)}</dd>
           <dt>Add-ons</dt>
-          <dd>{policy.add_ons.map(label).join(", ") || "None"}</dd>
+          <dd>{policy.add_ons.map(addOn).join(", ") || "None"}</dd>
           <dt>Bought</dt>
           <dd>
             <span className="mono">{date(policy.purchased_on)}</span>, through{" "}
@@ -197,11 +199,12 @@ function CustomerPanel({ claim }: Readonly<{ claim: Claim }>) {
     () => api.history(claim.customer_id),
     [claim.customer_id],
   );
-  const { data: history } = useApi(load, false);
+  const { data: history, error } = useApi(load, false);
   return (
     <section className="panel" aria-label="Customer">
       <h2>{claim.customer_name}</h2>
       <h3>Earlier claims</h3>
+      {!history && <Pending error={error} />}
       {history?.length === 0 && <p className="muted">None.</p>}
       {history && history.length > 0 && (
         <ul className="history">

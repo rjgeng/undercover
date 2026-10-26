@@ -1,5 +1,6 @@
 import { api, type Status } from "./api";
 import { date, DECISION_LABELS, label, money } from "./format";
+import { Pending } from "./Pending";
 import { StatusBadge } from "./StatusBadge";
 import { useApi } from "./useApi";
 
@@ -16,11 +17,7 @@ export function QueuePage() {
   return (
     <>
       <h1>Claims queue</h1>
-      {error && (
-        <p className="alert" role="alert">
-          {error}
-        </p>
-      )}
+      {(!claims || error) && <Pending error={error} />}
       {claims && (
         <>
           <section className="tiles" aria-label="Claims by state">

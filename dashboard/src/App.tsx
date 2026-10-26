@@ -12,8 +12,15 @@ export function App() {
           UnderCover
         </a>
         <nav aria-label="Main">
-          <a href="#/">Queue</a>
-          <a href="#/instructions">Instructions</a>
+          <a href="#/" aria-current={current(route, "queue")}>
+            Queue
+          </a>
+          <a
+            href="#/instructions"
+            aria-current={current(route, "instructions")}
+          >
+            Instructions
+          </a>
         </nav>
       </header>
       <main className="page">
@@ -21,6 +28,10 @@ export function App() {
       </main>
     </>
   );
+}
+
+function current(route: Route, page: Route["page"]) {
+  return route.page === page ? "page" : undefined;
 }
 
 function Page({ route }: Readonly<{ route: Route }>) {

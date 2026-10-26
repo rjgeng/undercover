@@ -43,6 +43,16 @@ export function clock(iso: string): string {
   return seconds.format(new Date(iso));
 }
 
+const ADD_ONS: Partial<Record<string, string>> = {
+  adventure_sports: "Adventure Sports",
+  pre_existing_waiver: "Pre-Existing Condition Waiver",
+  electronics_plus: "Electronics Plus",
+};
+
+export function addOn(code: string): string {
+  return ADD_ONS[code] ?? label(code);
+}
+
 export function label(code: string): string {
   const words = code.replaceAll("_", " ");
   return words.charAt(0).toUpperCase() + words.slice(1);

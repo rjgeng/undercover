@@ -57,10 +57,10 @@ There are four phases. Each one ends with every check green, its criteria ticked
 
 **Why:** a handler must be able to tell "failed" from "empty", and these are small changes that the comparison found Ed's build makes.
 
-- [ ] Vitest tests: each panel shows "Loading" and then its data; each panel shows the error when its load fails, and the steps panel then doesn't say "No steps yet."; the claim page shows an error after a later poll fails; a decline shows "Declined" and no "$0.00"; the decided time shows; the sign-off button stays disabled after success; add-on names; `aria-current` on the current page.
-- [ ] The end-to-end tests pass, with the claim test finding CLM-0412 in the customer panel.
-- [ ] In the browser, in light and dark mode: the claim page of a declined claim, set up through curl, shows no "$0.00" and shows the decided time. With the backend stopped, the queue, the claim page and the instructions page each show "The backend isn't responding (502)". The alert's text is at least 18.66px and bold.
-- [ ] `npm run check` passes.
+- [x] Vitest tests: each panel shows "Loading" and then its data; each panel shows the error when its load fails, and the steps panel then doesn't say "No steps yet."; the claim page shows an error after a later poll fails; a decline shows "Declined" and no "$0.00"; the decided time shows; the sign-off button stays disabled after success; add-on names; `aria-current` on the current page.
+- [x] The end-to-end tests pass, with the claim test finding CLM-0412 in the customer panel.
+- [x] In the browser (Playwright scripts with Chromium, since the Playwright MCP server needs Chrome), in light and dark mode: the claim page of a declined claim, set up through curl, shows no "$0.00" and shows the decided time. With the backend down (a second dashboard on port 5175 whose proxy points at a closed port, so `npm run dev` keeps running), the queue, the claim page and the instructions page each show "The backend isn't responding (502)". The alert's text is at least 18.66px and bold.
+- [x] `npm run check` passes.
 
 ## Phase 4: A procedural prompt drawn from the wording, and a second queue run
 

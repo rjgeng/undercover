@@ -27,8 +27,14 @@ it("moves between the queue, a claim and the instructions", async () => {
   expect(
     await screen.findByRole("heading", { name: "Claims queue" }),
   ).toBeDefined();
+  const queue = screen.getByRole("link", { name: "Queue" });
+  const instructions = screen.getByRole("link", { name: "Instructions" });
+  expect(queue.getAttribute("aria-current")).toBe("page");
+  expect(instructions.getAttribute("aria-current")).toBeNull();
   go("#/claims/CLM-1001");
   expect(await screen.findByText("Back to the queue")).toBeDefined();
   go("#/instructions");
   expect(await screen.findByText("The instructions")).toBeDefined();
+  expect(instructions.getAttribute("aria-current")).toBe("page");
+  expect(queue.getAttribute("aria-current")).toBeNull();
 });

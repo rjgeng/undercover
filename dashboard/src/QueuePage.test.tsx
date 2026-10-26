@@ -29,6 +29,7 @@ it("counts the claims in each state and lists them", async () => {
     ],
   });
   render(<QueuePage />);
+  expect(screen.getByRole("status").textContent).toBe("Loading");
   const row = await screen.findByRole("row", { name: /CLM-1006/ });
   expect(within(row).getByText("Waiting for sign-off")).toBeDefined();
   expect(within(row).getByText("Approved")).toBeDefined();

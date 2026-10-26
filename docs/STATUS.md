@@ -1,6 +1,6 @@
 # Status
 
-The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixes in `docs/PLAN_PILOT_FIXES.md` are under way: phases 1 and 2 of 4 are done.
+The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixes in `docs/PLAN_PILOT_FIXES.md` are under way: phases 1 to 3 of 4 are done.
 
 ## What's built
 
@@ -17,6 +17,7 @@ The claims pilot from `docs/PLAN.md` is built: all six phases are done. The fixe
   - The queue: a count of claims in each state and every claim's status and decision, refreshed every 2 seconds.
   - Each claim's page: the claim in full with its documents, the policy, the customer's earlier claims, the decision with its reasons and payment, and the agent's steps as they arrive. A claim waiting for sign-off has a choice of handler and a button to sign off and pay.
   - The instructions page: the agent's instructions and the policy wording, read only.
+  - Every panel shows "Loading" or its error, so a failed load never reads as empty, and an error shows even after a page has loaded. A decline or referral shows no payout, a decision shows when it was recorded, and add-ons show their names from the policy wording.
 - `e2e/`: Playwright tests of the queue, a claim, the agent's steps, sign-off and the instructions. They start their own backend on port 8001, with `e2e/undercover.db` reseeded on each `npm run e2e`, and their own dashboard on 5174, so they never touch the queue you use with `npm run dev`. Playwright's UI mode and the VS Code extension keep those servers running between runs, so restart them before running the tests again.
 
 ## The first run of the whole queue

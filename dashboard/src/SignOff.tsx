@@ -18,8 +18,6 @@ export function SignOff({
       .signOff(claim.claim_id, handlerId)
       .then(onDone, (reason: unknown) => {
         setError(message(reason));
-      })
-      .finally(() => {
         setBusy(false);
       });
   };
