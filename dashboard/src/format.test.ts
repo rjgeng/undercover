@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { date, decisionText, label, money, time } from "./format";
+import { clock, date, label, money, STATUS_LABELS, time } from "./format";
 
 it("formats money in US dollars", () => {
   expect(money(1250)).toBe("$1,250.00");
@@ -16,9 +16,12 @@ it("turns codes into labels", () => {
   expect(label("premium")).toBe("Premium");
 });
 
-it("describes a decision", () => {
-  expect(decisionText(null, null)).toBe("");
-  expect(decisionText("approve", 1150)).toBe("Approved, $1,150.00");
-  expect(decisionText("decline", 0)).toBe("Declined");
-  expect(decisionText("refer", 0)).toBe("Referred");
+it("labels each state", () => {
+  expect(Object.values(STATUS_LABELS)).toEqual([
+    "Waiting",
+    "In progress",
+    "Waiting for sign-off",
+    "Decided",
+  ]);
+  expect(clock("2026-10-26T02:24:47+00:00")).toMatch(/:24:47/);
 });

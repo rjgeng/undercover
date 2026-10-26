@@ -1,5 +1,5 @@
 import { useState, type SyntheticEvent } from "react";
-import { api, type Claim, type Handler } from "./api";
+import { api, message, type Claim, type Handler } from "./api";
 import { money } from "./format";
 
 export function SignOff({
@@ -17,7 +17,7 @@ export function SignOff({
     void api
       .signOff(claim.claim_id, handlerId)
       .then(onDone, (reason: unknown) => {
-        setError(reason instanceof Error ? reason.message : "Failed");
+        setError(message(reason));
       })
       .finally(() => {
         setBusy(false);

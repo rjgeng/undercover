@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { message } from "./api";
 
 export const EVERY = 2000;
 
@@ -18,24 +19,27 @@ export function useApi<T>(load: () => Promise<T>, poll = true): Loaded<T> {
 
   useEffect(() => {
     let live = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const refresh = () => {
-      load().then(
-        (value) => {
-          if (!live) return;
-          setData(value);
-          setError(undefined);
-        },
-        (reason: unknown) => {
-          if (live)
-            setError(reason instanceof Error ? reason.message : "Failed");
-        },
-      );
+      load()
+        .then(
+          (value) => {
+            if (!live) return;
+            setData(value);
+            setError(undefined);
+          },
+          (reason: unknown) => {
+            if (live) setError(message(reason));
+          },
+        )
+        .finally(() => {
+          if (live && poll) timer = setTimeout(refresh, EVERY);
+        });
     };
     refresh();
-    const timer = poll ? setInterval(refresh, EVERY) : undefined;
     return () => {
       live = false;
-      clearInterval(timer);
+      clearTimeout(timer);
     };
   }, [load, poll, tick]);
 

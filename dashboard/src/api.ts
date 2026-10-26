@@ -108,10 +108,17 @@ export interface PolicyWording {
   text: string;
 }
 
+export function message(reason: unknown): string {
+  return reason instanceof Error ? reason.message : String(reason);
+}
+
 async function read(response: Response): Promise<unknown> {
-  const body: unknown = await response.json();
-  if (!response.ok) throw new Error((body as { detail: string }).detail);
-  return body;
+  if (response.ok) return response.json();
+  const body = (await response.json().catch(() => undefined)) as
+    { detail?: string } | undefined;
+  throw new Error(
+    body?.detail ?? `The backend isn't responding (${String(response.status)})`,
+  );
 }
 
 function get(path: string): Promise<unknown> {

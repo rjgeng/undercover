@@ -47,12 +47,3 @@ export function label(code: string): string {
   const words = code.replaceAll("_", " ");
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
-
-export function decisionText(
-  decision: Decision | null,
-  payout: number | null,
-): string {
-  if (decision === null) return "";
-  if (decision !== "approve") return DECISION_LABELS[decision];
-  return `Approved, ${money(payout ?? 0)}`;
-}

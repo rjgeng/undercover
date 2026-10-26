@@ -154,13 +154,17 @@ def test_main_works_every_waiting_claim(client, monkeypatch, capsys):
     worked = []
 
     def fake_run(claim_id, thread_id):
-        worked.append(claim_id)
+        worked.append((claim_id, thread_id))
         client.post(f"/api/claims/{claim_id}/start", json={"thread_id": thread_id})
 
     client.post("/api/claims/CLM-1001/start", json={"thread_id": "earlier"})
     monkeypatch.setattr(main, "run", fake_run)
     main.main([])
-    assert worked == [f"CLM-{n}" for n in range(1002, 1026)]
+    assert [claim_id for claim_id, _ in worked] == [
+        f"CLM-{n}" for n in range(1002, 1026)
+    ]
+    assert len({thread_id for _, thread_id in worked}) == 24
+    assert all(thread_id.startswith(f"{c}-") for c, thread_id in worked)
     lines = capsys.readouterr().out.splitlines()
     assert lines[0] == "CLM-1002: no decision (in progress)"
     assert len(lines) == 24
@@ -183,18 +187,33 @@ def test_main_works_named_claims(client, monkeypatch, capsys):
 
     client.post("/api/claims/CLM-1003/start", json={"thread_id": "earlier"})
     monkeypatch.setattr(main, "run", fake_run)
-    main.main(["CLM-1001", "CLM-1002", "CLM-1003", "CLM-9999"])
+    main.main(["CLM-1001", "CLM-1002", "CLM-1003", "CLM-9999", "CLM-1001"])
     assert capsys.readouterr().out.splitlines() == [
         "CLM-1001: approve $420.00 (decided, paid)",
         "CLM-1002: approve $1,150.00 (waiting for sign-off)",
         "CLM-1003: skipped, it's in progress",
         "CLM-9999: skipped, it's not in the queue",
+        "CLM-1001: skipped, it's decided",
     ]
+
+
+def test_ids_must_look_like_ids(client):
+    model = stub(
+        use("get_claim", claim_id="../customers/CUS-3001"),
+        use("get_claim_history", customer_id="CUS-3001/"),
+        AIMessage(content="Stopped."),
+    )
+    main.run("CLM-1001", "thread-5", model)
+    details = [s["detail"] for s in steps(client, "CLM-1001") if s["kind"] == "tool"]
+    assert len(details) == 2
+    assert all("should match pattern" in detail for detail in details)
+    assert not any("maya.patel@example.com" in detail for detail in details)
 
 
 def test_model_name(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     monkeypatch.delenv("MODEL_NAME", raising=False)
     assert main.model().model_name == "openai/gpt-6-luna"
+    assert main.model().model_kwargs == {"parallel_tool_calls": False}
     monkeypatch.setenv("MODEL_NAME", "openrouter/free")
     assert main.model().model_name == "openrouter/free"

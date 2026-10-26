@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import uuid4
 
 import httpx
@@ -12,7 +12,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AnyMessage, ToolCall, ToolMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 
 load_dotenv(override=True)
 
@@ -26,6 +26,9 @@ TITLES = {
     "record_decision": "Record the decision",
     "pay_claim": "Pay the claim",
 }
+ClaimId = Annotated[str, Field(pattern=r"^CLM-\d+$")]
+PolicyId = Annotated[str, Field(pattern=r"^POL-\d+$")]
+CustomerId = Annotated[str, Field(pattern=r"^CUS-\d+$")]
 LABELS = {
     "waiting": "waiting",
     "in_progress": "in progress",
@@ -59,19 +62,19 @@ def call(method: str, path: str, body: dict[str, Any] | None = None) -> str:
 
 
 @tool
-def get_claim(claim_id: str) -> str:
+def get_claim(claim_id: ClaimId) -> str:
     """Read a claim: the customer's story, the items claimed and the documents."""
     return call("GET", f"/api/claims/{claim_id}")
 
 
 @tool
-def get_policy(policy_id: str) -> str:
+def get_policy(policy_id: PolicyId) -> str:
     """Read a policy: its plan, add-ons, purchase date, trip and travelers."""
     return call("GET", f"/api/policies/{policy_id}")
 
 
 @tool
-def get_claim_history(customer_id: str) -> str:
+def get_claim_history(customer_id: CustomerId) -> str:
     """Read the customer's earlier claims."""
     reply = call("GET", f"/api/customers/{customer_id}")
     if reply.startswith("Refused"):
@@ -81,7 +84,7 @@ def get_claim_history(customer_id: str) -> str:
 
 @tool
 def record_decision(
-    claim_id: str,
+    claim_id: ClaimId,
     decision: Literal["approve", "decline", "refer"],
     payout: float,
     reasons: str,
@@ -101,7 +104,7 @@ def record_decision(
 
 
 @tool
-def pay_claim(claim_id: str, amount: float) -> str:
+def pay_claim(claim_id: ClaimId, amount: float) -> str:
     """Pay an approved claim its payout."""
     return call("POST", f"/api/claims/{claim_id}/payment", {"amount": amount})
 
@@ -117,6 +120,7 @@ def model() -> ChatOpenAI:
         base_url=OPENROUTER_BASE_URL,
         api_key=SecretStr(os.environ["OPENROUTER_API_KEY"]),
         reasoning_effort=None if name else "low",
+        model_kwargs={"parallel_tool_calls": False},
     )
 
 
@@ -149,7 +153,7 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
     reply = ""
     for update in agent.stream(
         {"messages": [{"role": "user", "content": f"Please decide claim {claim_id}."}]},
-        config={"configurable": {"thread_id": thread_id}},
+        config={"configurable": {"thread_id": thread_id}, "recursion_limit": 50},
         stream_mode="updates",
     ):
         for node in update.values():
@@ -173,11 +177,13 @@ def outcome(claim_id: str) -> str:
 
 def main(claim_ids: list[str]) -> None:
     """Work the named claims, or every waiting claim in the queue."""
-    statuses = {claim["claim_id"]: claim["status"] for claim in fetch("/api/claims")}
-    waiting = [claim_id for claim_id, s in statuses.items() if s == "waiting"]
+    queue = fetch("/api/claims")
+    waiting = [claim["claim_id"] for claim in queue if claim["status"] == "waiting"]
     for claim_id in claim_ids or waiting:
-        if claim_id not in waiting:
-            where = LABELS.get(statuses.get(claim_id, ""), "not in the queue")
+        found = send("GET", f"/api/claims/{claim_id}")
+        status = found.json()["status"] if found.is_success else None
+        if status != "waiting":
+            where = LABELS[status] if status else "not in the queue"
             print(f"{claim_id}: skipped, it's {where}")
             continue
         run(claim_id, f"{claim_id}-{uuid4().hex[:8]}")

@@ -36,7 +36,7 @@ it("reloads on request and reports errors", async () => {
     result.current.reload();
   });
   await vi.waitFor(() => {
-    expect(result.current.error).toBe("Failed");
+    expect(result.current.error).toBe("odd");
   });
   act(() => {
     result.current.reload();

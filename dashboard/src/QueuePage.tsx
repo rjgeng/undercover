@@ -1,5 +1,5 @@
 import { api, type Status } from "./api";
-import { date, decisionText, label, money } from "./format";
+import { date, DECISION_LABELS, label, money } from "./format";
 import { StatusBadge } from "./StatusBadge";
 import { useApi } from "./useApi";
 
@@ -65,7 +65,15 @@ export function QueuePage() {
                     <td>
                       <StatusBadge status={claim.status} />
                     </td>
-                    <td>{decisionText(claim.decision, claim.payout)}</td>
+                    <td>
+                      {claim.decision && DECISION_LABELS[claim.decision]}
+                      {claim.decision === "approve" && (
+                        <span className="mono">
+                          {" "}
+                          {money(claim.payout ?? 0)}
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

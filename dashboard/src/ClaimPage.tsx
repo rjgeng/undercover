@@ -128,7 +128,7 @@ function DecisionPanel({
           {claim.signed_off_at && (
             <p>
               Signed off by {signer?.name ?? claim.signed_off_by} on{" "}
-              {time(claim.signed_off_at)}
+              <span className="mono">{time(claim.signed_off_at)}</span>
             </p>
           )}
           <Payment claim={claim} />
@@ -146,12 +146,12 @@ function Payment({ claim }: Readonly<{ claim: Claim }>) {
     return (
       <p>
         Paid <span className="mono">{money(claim.paid_amount)}</span> on{" "}
-        {time(claim.paid_at)}
+        <span className="mono">{time(claim.paid_at)}</span>
       </p>
     );
   }
   if (claim.status === "waiting_for_sign_off") {
-    return <p>A payout over $1,000.00 is paid once a handler signs it off.</p>;
+    return <p>This payout is paid once a handler signs it off.</p>;
   }
   return claim.decision === "approve" ? <p>Not paid yet.</p> : null;
 }
