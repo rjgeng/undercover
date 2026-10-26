@@ -2,10 +2,11 @@
 
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, Field
+from pydantic import AfterValidator, BaseModel, Field, StringConstraints
 
 Status = Literal["waiting", "in_progress", "waiting_for_sign_off", "decided"]
 Decision = Literal["approve", "decline", "refer"]
+Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 Money = Annotated[
     float,
     Field(ge=0, allow_inf_nan=False),
@@ -41,6 +42,7 @@ class Claim(BaseModel):
     claim_id: str
     policy_id: str
     customer_id: str
+    customer_name: str
     claim_type: str
     submitted_on: str
     incident_date: str
@@ -82,13 +84,6 @@ class Policy(BaseModel):
     status: str
 
 
-class Address(BaseModel):
-    street: str
-    city: str
-    state: str
-    zip: str
-
-
 class PreviousClaim(BaseModel):
     claim_id: str
     filed_on: str
@@ -99,22 +94,10 @@ class PreviousClaim(BaseModel):
     amount_paid: float
 
 
-class Customer(BaseModel):
-    customer_id: str
-    name: str
-    email: str
-    phone: str
-    date_of_birth: str
-    address: Address
-    customer_since: str
-    previous_claims: list[PreviousClaim]
-
-
 class Handler(BaseModel):
     handler_id: str
     name: str
     role: str
-    email: str
     can_approve_over_limit: bool
 
 
@@ -128,13 +111,13 @@ class Instructions(BaseModel):
 
 
 class StartClaim(BaseModel):
-    thread_id: str
+    thread_id: Text
 
 
 class NewStep(BaseModel):
     kind: Literal["tool", "note"]
-    title: str
-    detail: str
+    title: Text
+    detail: Text
 
 
 class Step(NewStep):
@@ -146,8 +129,8 @@ class Step(NewStep):
 class NewDecision(BaseModel):
     decision: Decision
     payout: Money
-    reasons: str
-    policy_section: str
+    reasons: Text
+    policy_section: Text
 
 
 class Payment(BaseModel):

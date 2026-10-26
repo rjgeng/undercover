@@ -24,4 +24,4 @@ def connect() -> sqlite3.Connection:
 
 def load(name: str) -> list[dict[str, Any]]:
     """Read one of the JSON files in data/."""
-    return json.loads((DATA / name).read_text())
+    return json.loads((DATA / name).read_text(encoding="utf-8"))

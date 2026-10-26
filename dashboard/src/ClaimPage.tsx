@@ -39,7 +39,7 @@ export function ClaimPage({ claimId }: Readonly<{ claimId: string }>) {
         <div>
           <DecisionPanel claim={claim} handlers={handlers} onChange={reload} />
           <PolicyPanel policyId={claim.policy_id} />
-          <CustomerPanel customerId={claim.customer_id} />
+          <CustomerPanel claim={claim} />
         </div>
       </div>
     </>
@@ -192,35 +192,28 @@ function PolicyPanel({ policyId }: Readonly<{ policyId: string }>) {
   );
 }
 
-function CustomerPanel({ customerId }: Readonly<{ customerId: string }>) {
-  const load = useCallback(() => api.customer(customerId), [customerId]);
-  const { data: customer } = useApi(load, false);
+function CustomerPanel({ claim }: Readonly<{ claim: Claim }>) {
+  const load = useCallback(
+    () => api.history(claim.customer_id),
+    [claim.customer_id],
+  );
+  const { data: history } = useApi(load, false);
   return (
     <section className="panel" aria-label="Customer">
-      <h2>{customer?.name ?? "Customer"}</h2>
-      {customer && (
-        <>
-          <p className="muted">
-            Customer since{" "}
-            <span className="mono">{date(customer.customer_since)}</span>
-          </p>
-          <h3>Earlier claims</h3>
-          {customer.previous_claims.length === 0 ? (
-            <p className="muted">None.</p>
-          ) : (
-            <ul className="history">
-              {customer.previous_claims.map((earlier) => (
-                <li key={earlier.claim_id}>
-                  <span className="mono">{earlier.claim_id}</span>,{" "}
-                  <span className="mono">{date(earlier.filed_on)}</span>:{" "}
-                  {earlier.summary}. {label(earlier.outcome)},{" "}
-                  <span className="mono">{money(earlier.amount_paid)}</span>{" "}
-                  paid.
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+      <h2>{claim.customer_name}</h2>
+      <h3>Earlier claims</h3>
+      {history?.length === 0 && <p className="muted">None.</p>}
+      {history && history.length > 0 && (
+        <ul className="history">
+          {history.map((earlier) => (
+            <li key={earlier.claim_id}>
+              <span className="mono">{earlier.claim_id}</span>,{" "}
+              <span className="mono">{date(earlier.filed_on)}</span>:{" "}
+              {earlier.summary}. {label(earlier.outcome)},{" "}
+              <span className="mono">{money(earlier.amount_paid)}</span> paid.
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

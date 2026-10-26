@@ -76,10 +76,7 @@ def get_policy(policy_id: PolicyId) -> str:
 @tool
 def get_claim_history(customer_id: CustomerId) -> str:
     """Read the customer's earlier claims."""
-    reply = call("GET", f"/api/customers/{customer_id}")
-    if reply.startswith("Refused"):
-        return reply
-    return json.dumps(json.loads(reply)["previous_claims"])
+    return call("GET", f"/api/customers/{customer_id}/claims")
 
 
 @tool

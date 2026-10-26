@@ -143,6 +143,46 @@ def test_the_queue_shows_decisions(client):
     )
 
 
+@pytest.mark.parametrize("field", ["reasons", "policy_section"])
+@pytest.mark.parametrize("text", ["", "   "])
+def test_a_decision_needs_reasons_and_a_section(client, field, text):
+    start(client, "CLM-1001")
+    body = {
+        "decision": "approve",
+        "payout": 420.0,
+        "reasons": "The reasons.",
+        "policy_section": "Section 3",
+    }
+    response = client.post("/api/claims/CLM-1001/decision", json=body | {field: text})
+    assert response.status_code == 422
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "in_progress"
+
+
+def test_a_start_needs_a_thread_id(client):
+    response = client.post("/api/claims/CLM-1001/start", json={"thread_id": ""})
+    assert response.status_code == 422
+
+
+def step(client, claim_id, title="Read the claim", detail="{}"):
+    return client.post(
+        f"/api/claims/{claim_id}/steps",
+        json={"kind": "tool", "title": title, "detail": detail},
+    )
+
+
+def test_steps_need_a_started_claim_and_text(client):
+    response = step(client, "CLM-1001")
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "Claim CLM-1001 is waiting, so it can't take a step"
+    )
+    start(client, "CLM-1001")
+    assert step(client, "CLM-1001", title="").status_code == 422
+    assert step(client, "CLM-1001", detail=" ").status_code == 422
+    decide(client, "CLM-1001", "decline", 0)
+    assert step(client, "CLM-1001").status_code == 200
+
+
 def test_payment_refusals(client):
     start(client, "CLM-1001")
     assert pay(client, "CLM-1001", 420.0).json()["detail"] == (
@@ -203,6 +243,7 @@ def test_sign_off_needs_a_handler_who_can_approve_over_the_limit(client):
 
 
 def test_steps_come_back_in_order(client):
+    start(client, "CLM-1001")
     for title in ["Read the claim", "Read the policy"]:
         response = client.post(
             "/api/claims/CLM-1001/steps",

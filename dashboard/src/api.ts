@@ -30,6 +30,7 @@ export interface Claim {
   claim_id: string;
   policy_id: string;
   customer_id: string;
+  customer_name: string;
   claim_type: string;
   submitted_on: string;
   incident_date: string;
@@ -77,15 +78,6 @@ export interface PreviousClaim {
   summary: string;
   outcome: string;
   amount_paid: number;
-}
-
-export interface Customer {
-  customer_id: string;
-  name: string;
-  email: string;
-  phone: string;
-  customer_since: string;
-  previous_claims: PreviousClaim[];
 }
 
 export interface Handler {
@@ -138,7 +130,8 @@ export const api = {
   claim: (id: string) => get(`/api/claims/${id}`) as Promise<Claim>,
   steps: (id: string) => get(`/api/claims/${id}/steps`) as Promise<Step[]>,
   policy: (id: string) => get(`/api/policies/${id}`) as Promise<Policy>,
-  customer: (id: string) => get(`/api/customers/${id}`) as Promise<Customer>,
+  history: (id: string) =>
+    get(`/api/customers/${id}/claims`) as Promise<PreviousClaim[]>,
   handlers: () => get("/api/handlers") as Promise<Handler[]>,
   wording: () => get("/api/policy-wording") as Promise<PolicyWording>,
   instructions: () => get("/api/instructions") as Promise<{ text: string }>,

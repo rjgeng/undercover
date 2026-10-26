@@ -14,7 +14,6 @@ from backend import db
 from backend.models import (
     Claim,
     ClaimSummary,
-    Customer,
     Handler,
     Instructions,
     NewDecision,
@@ -22,13 +21,14 @@ from backend.models import (
     Payment,
     Policy,
     PolicyWording,
+    PreviousClaim,
     SignOff,
     StartClaim,
     Step,
 )
 from backend.seed import seed
 
-COMPANY = json.loads((db.DATA / "company.json").read_text())
+COMPANY = json.loads((db.DATA / "company.json").read_text(encoding="utf-8"))
 LIMIT: float = COMPANY["payout_approval_limit"]
 LABELS = {
     "waiting": "waiting",
@@ -100,7 +100,11 @@ def wrong_state(claim: Claim, why: str) -> HTTPException:
 
 def find_claim(conn: sqlite3.Connection, claim_id: str) -> Claim:
     """Load a claim with its state."""
-    row = conn.execute("SELECT * FROM claims WHERE claim_id = ?", (claim_id,))
+    row = conn.execute(
+        "SELECT claims.*, json_extract(customers.record, '$.name') AS customer_name"
+        " FROM claims JOIN customers USING (customer_id) WHERE claim_id = ?",
+        (claim_id,),
+    )
     return Claim.model_validate(merged(found(row.fetchone(), f"Claim {claim_id}")))
 
 
@@ -133,15 +137,14 @@ def get_policy(policy_id: str, conn: Conn) -> Policy:
     return Policy.model_validate_json(found(row.fetchone(), f"Policy {policy_id}")[0])
 
 
-@app.get("/api/customers/{customer_id}", operation_id="get_customer")
-def get_customer(customer_id: str, conn: Conn) -> Customer:
-    """Get a customer, with their earlier claims."""
+@app.get("/api/customers/{customer_id}/claims", operation_id="get_claim_history")
+def get_claim_history(customer_id: str, conn: Conn) -> list[PreviousClaim]:
+    """Get a customer's earlier claims, without their personal details."""
     row = conn.execute(
         "SELECT record FROM customers WHERE customer_id = ?", (customer_id,)
     )
-    return Customer.model_validate_json(
-        found(row.fetchone(), f"Customer {customer_id}")[0]
-    )
+    customer = json.loads(found(row.fetchone(), f"Customer {customer_id}")[0])
+    return [PreviousClaim.model_validate(c) for c in customer["previous_claims"]]
 
 
 @app.get("/api/handlers", operation_id="list_handlers")
@@ -156,14 +159,15 @@ def get_policy_wording() -> PolicyWording:
     """Get the policy wording that decisions follow."""
     return PolicyWording(
         version=COMPANY["policy_wording_version"],
-        text=(db.DATA / "policy_wording.md").read_text(),
+        text=(db.DATA / "policy_wording.md").read_text(encoding="utf-8"),
     )
 
 
 @app.get("/api/instructions", operation_id="get_instructions")
 def get_instructions() -> Instructions:
     """Get the UnderCover Agent's instructions."""
-    return Instructions(text=(Path(__file__).parent / "instructions.md").read_text())
+    path = Path(__file__).parent / "instructions.md"
+    return Instructions(text=path.read_text(encoding="utf-8"))
 
 
 @app.post("/api/claims/{claim_id}/start", operation_id="start_claim")
@@ -185,7 +189,9 @@ def start_claim(claim_id: str, body: StartClaim, conn: Conn) -> Claim:
 def add_step(claim_id: str, body: NewStep, conn: Conn) -> Step:
     """Record a step the agent took on a claim."""
     with change(conn):
-        find_claim(conn, claim_id)
+        claim = find_claim(conn, claim_id)
+        if claim.status == "waiting":
+            raise wrong_state(claim, "so it can't take a step")
         row = conn.execute(
             "INSERT INTO steps (claim_id, kind, title, detail, created_at)"
             " VALUES (?, ?, ?, ?, ?) RETURNING *",

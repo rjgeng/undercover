@@ -1,3 +1,4 @@
+from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
 from backend import db
@@ -23,6 +24,7 @@ def test_get_claim(client):
     assert len(claim["documents"]) == 4
     assert claim["amount_claimed"] == 420.0
     assert claim["customer_id"] == "CUS-3001"
+    assert claim["customer_name"] == "Maya Patel"
     assert claim["status"] == "waiting"
     assert claim["decision"] is None
 
@@ -31,14 +33,15 @@ def test_every_record_reads(client):
     for summary in client.get("/api/claims").json():
         claim = client.get(f"/api/claims/{summary['claim_id']}").json()
         assert client.get(f"/api/policies/{claim['policy_id']}").status_code == 200
-        assert client.get(f"/api/customers/{claim['customer_id']}").status_code == 200
+        history = client.get(f"/api/customers/{claim['customer_id']}/claims")
+        assert history.status_code == 200
 
 
 def test_missing_records(client):
     for path, detail in [
         ("/api/claims/CLM-9999", "Claim CLM-9999 not found"),
         ("/api/policies/POL-9999", "Policy POL-9999 not found"),
-        ("/api/customers/CUS-9999", "Customer CUS-9999 not found"),
+        ("/api/customers/CUS-9999/claims", "Customer CUS-9999 not found"),
     ]:
         response = client.get(path)
         assert response.status_code == 404
@@ -51,10 +54,31 @@ def test_get_policy(client):
     assert policy["trip"]["destination"] == "Rome, Italy"
 
 
-def test_get_customer(client):
-    customer = client.get("/api/customers/CUS-3001").json()
-    assert customer["name"] == "Maya Patel"
-    assert [c["claim_id"] for c in customer["previous_claims"]] == ["CLM-0412"]
+def test_get_claim_history(client):
+    history = client.get("/api/customers/CUS-3001/claims").json()
+    assert [c["claim_id"] for c in history] == ["CLM-0412"]
+    assert client.get("/api/customers/CUS-3001").status_code == 404
+
+
+def test_no_route_serves_personal_data(client):
+    client.post("/api/claims/CLM-1001/start", json={"thread_id": "t-1"})
+    client.post(
+        "/api/claims/CLM-1001/steps",
+        json={"kind": "tool", "title": "Read the claim", "detail": "{}"},
+    )
+    ids = {"claim_id": "CLM-1001", "policy_id": "POL-2001", "customer_id": "CUS-3001"}
+    personal = [
+        "maya.patel@example.com",
+        "201 555 0143",
+        "1988-03-14",
+        "48 Wayne Street",
+        "@undercover.example",
+    ]
+    for route in app.routes:
+        if isinstance(route, APIRoute) and route.methods == {"GET"}:
+            response = client.get(route.path.format(**ids))
+            assert response.status_code == 200, route.path
+            assert not any(item in response.text for item in personal), route.path
 
 
 def test_list_handlers(client):

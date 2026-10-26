@@ -2,9 +2,9 @@ import { vi } from "vitest";
 import type {
   Claim,
   ClaimSummary,
-  Customer,
   Handler,
   Policy,
+  PreviousClaim,
   Step,
 } from "./api";
 
@@ -47,6 +47,7 @@ export function claimRecord(changes: Partial<Claim> = {}): Claim {
     claim_id: "CLM-1001",
     policy_id: "POL-2001",
     customer_id: "CUS-3001",
+    customer_name: "Maya Patel",
     claim_type: "trip_delay",
     submitted_on: "2026-06-24",
     incident_date: "2026-06-18",
@@ -97,24 +98,17 @@ export const POLICY: Policy = {
   status: "active",
 };
 
-export const CUSTOMER: Customer = {
-  customer_id: "CUS-3001",
-  name: "Maya Patel",
-  email: "maya.patel@example.com",
-  phone: "+1 201 555 0143",
-  customer_since: "2023-04-11",
-  previous_claims: [
-    {
-      claim_id: "CLM-0412",
-      filed_on: "2024-08-19",
-      incident_date: "2024-08-09",
-      claim_type: "baggage_delay",
-      summary: "Checked bag arrived 30 hours late in Lisbon",
-      outcome: "approved",
-      amount_paid: 140,
-    },
-  ],
-};
+export const HISTORY: PreviousClaim[] = [
+  {
+    claim_id: "CLM-0412",
+    filed_on: "2024-08-19",
+    incident_date: "2024-08-09",
+    claim_type: "baggage_delay",
+    summary: "Checked bag arrived 30 hours late in Lisbon",
+    outcome: "approved",
+    amount_paid: 140,
+  },
+];
 
 export const HANDLERS: Handler[] = [
   {
@@ -147,7 +141,7 @@ export function claimRoutes(claim: Claim, steps: Step[] = []) {
     "/api/claims/CLM-1001": claim,
     "/api/claims/CLM-1001/steps": steps,
     "/api/policies/POL-2001": POLICY,
-    "/api/customers/CUS-3001": CUSTOMER,
+    "/api/customers/CUS-3001/claims": HISTORY,
     "/api/handlers": HANDLERS,
   };
 }
