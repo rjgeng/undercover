@@ -94,7 +94,7 @@ Every operation has an `operation_id`, a one-line docstring and no optional inpu
 
 **Why now:** this is where the spec's one hard rule lives, so it's built and tested on its own, before any model is involved.
 
-- [ ] Tests cover every row of the state table and every refusal:
+- [x] Tests cover every row of the state table and every refusal:
   - starting a claim that isn't waiting (409)
   - a decision on a claim that isn't in progress (409)
   - a negative payout (422)
@@ -106,15 +106,15 @@ Every operation has an `operation_id`, a one-line docstring and no optional inpu
   - signing off a claim that isn't waiting for sign-off (409)
   - signing off with an unknown handler (404)
   - signing off with a handler who can't approve over the limit, added to the test database (403)
-- [ ] Tests at the limit: approving 1000.00 ends `decided` and can be paid, approving 1000.01 ends `waiting_for_sign_off`, and an amount like 420.004 is stored as 420.0.
-- [ ] On the running backend, `start_claim` on CLM-1002 with a thread id returns status `in_progress`.
-- [ ] `record_decision` on CLM-1002 with `approve` and a payout of 1150.0 returns status `waiting_for_sign_off`.
-- [ ] `pay_claim` on CLM-1002 with 1150.0, through `curl -s -w '\n%{http_code}\n'`, prints `A payout over $1,000.00 needs a handler's sign-off.` and 403, and `get_claim` still shows no payment.
-- [ ] `sign_off_claim` on CLM-1002 with HND-01 returns status `decided`, signed off by HND-01, paid 1150.0.
-- [ ] On CLM-1001, approving 420.0 returns `decided`, and `pay_claim` with 420.0 succeeds and records the payment.
-- [ ] Two `add_step` calls on CLM-1001 come back from `list_steps` in the order they were posted.
-- [ ] With the backend still running, `uv run -m backend.seed`, then `curl -s localhost:8000/api/claims`, shows 25 `waiting` claims again.
-- [ ] `npm run check` passes.
+- [x] Tests at the limit: approving 1000.00 ends `decided` and can be paid, approving 1000.01 ends `waiting_for_sign_off`, and an amount like 420.004 is stored as 420.0.
+- [x] On the running backend, `start_claim` on CLM-1002 with a thread id returns status `in_progress`.
+- [x] `record_decision` on CLM-1002 with `approve` and a payout of 1150.0 returns status `waiting_for_sign_off`.
+- [x] `pay_claim` on CLM-1002 with 1150.0, through `curl -s -w '\n%{http_code}\n'`, prints `A payout over $1,000.00 needs a handler's sign-off.` and 403, and `get_claim` still shows no payment.
+- [x] `sign_off_claim` on CLM-1002 with HND-01 returns status `decided`, signed off by HND-01, paid 1150.0.
+- [x] On CLM-1001, approving 420.0 returns `decided`, and `pay_claim` with 420.0 succeeds and records the payment.
+- [x] Two `add_step` calls on CLM-1001 come back from `list_steps` in the order they were posted.
+- [x] With the backend still running, `uv run -m backend.seed`, then `curl -s localhost:8000/api/claims`, shows 25 `waiting` claims again.
+- [x] `npm run check` passes.
 
 ## Phase 3: The UnderCover Agent
 

@@ -1,11 +1,12 @@
 """The shapes of UnderCover's records in the API."""
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel
+from pydantic import AfterValidator, BaseModel, Field
 
 Status = Literal["waiting", "in_progress", "waiting_for_sign_off", "decided"]
 Decision = Literal["approve", "decline", "refer"]
+Money = Annotated[float, Field(ge=0), AfterValidator(lambda amount: round(amount, 2))]
 
 
 class Item(BaseModel):
@@ -116,3 +117,34 @@ class Handler(BaseModel):
 class PolicyWording(BaseModel):
     version: str
     text: str
+
+
+class StartClaim(BaseModel):
+    thread_id: str
+
+
+class NewStep(BaseModel):
+    kind: Literal["tool", "note"]
+    title: str
+    detail: str
+
+
+class Step(NewStep):
+    step_id: int
+    claim_id: str
+    created_at: str
+
+
+class NewDecision(BaseModel):
+    decision: Decision
+    payout: Money
+    reasons: str
+    policy_section: str
+
+
+class Payment(BaseModel):
+    amount: Money
+
+
+class SignOff(BaseModel):
+    handler_id: str
