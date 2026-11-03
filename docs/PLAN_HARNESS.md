@@ -192,15 +192,15 @@ Build `work_claim`'s core, which works one claim, records its steps, catches any
 
 Build the queue agent with `list_claims`, `update_todos`, `work_claim` and `finish_run`, its instructions, the run id in runtime context, and `uv run -m agent` with `--cap`. The pilot's `work_queue()` gives way to it.
 
-- [ ] A pytest test checks that the queue agent's tools are exactly `list_claims`, `update_todos`, `work_claim` and `finish_run`, and that none of them takes a run id from the model
-- [ ] Stub model test, a whole run: with three claims waiting and cap 3, the queue stub writes the to-do list, works each claim, ticks each item off and finishes. The run is `finished` with the last list and the summary, and the command prints each claim's line and then the summary
-- [ ] Stub model test, the cap: with five claims waiting and cap 2, a third `work_claim` comes back to the stub as a refusal naming the cap, three claims stay `waiting`, and the run finishes
-- [ ] Stub model test, one failure doesn't stop the run: the claim agent fails on the first claim and the next claims are still worked
-- [ ] Stub model test, trying again: a claim that fails once is worked again later in the same run and decided, with `failures` 1
-- [ ] Stub model test, twice: a claim that fails twice needs a handler, its to-do item is Left for a handler, and the run finishes
-- [ ] Stub model test, missed claims: the stub calls `finish_run` with a claim still owed, the refusal names it, the stub works it, and the run then finishes
-- [ ] Stub test of the command line: `uv run -m agent --cap 5` starts a run with cap 5, and `uv run -m agent` starts one capped at the number of waiting claims
-- [ ] `npm run check` passes
+- [x] A pytest test checks that the queue agent's tools are exactly `list_claims`, `update_todos`, `work_claim` and `finish_run`, and that none of them takes a run id from the model
+- [x] Stub model test, a whole run: with three claims waiting and cap 3, the queue stub writes the to-do list, works each claim, ticks each item off and finishes. The run is `finished` with the last list and the summary, and the command prints each claim's line and then the summary
+- [x] Stub model test, the cap: with five claims waiting and cap 2, a third `work_claim` comes back to the stub as a refusal naming the cap, three claims stay `waiting`, and the run finishes
+- [x] Stub model test, one failure doesn't stop the run: the claim agent fails on the first claim and the next claims are still worked
+- [x] Stub model test, trying again: a claim that fails once is worked again later in the same run and decided, with `failures` 1
+- [x] Stub model test, twice: a claim that fails twice needs a handler, its to-do item is Left for a handler, and the run finishes
+- [x] Stub model test, missed claims: the stub calls `finish_run` with a claim still owed, the refusal names it, the stub works it, and the run then finishes
+- [x] Stub test of the command line: `uv run -m agent --cap 5` starts a run with cap 5, and `uv run -m agent` starts one capped at the number of waiting claims
+- [x] `npm run check` passes
 
 ## Phase 5: The dashboard shows the run
 

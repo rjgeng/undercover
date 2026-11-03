@@ -3,7 +3,6 @@
 import json
 import os
 import uuid
-from collections import Counter
 from typing import Any
 
 from dotenv import load_dotenv
@@ -24,6 +23,7 @@ DOCUMENTS = {"wording": "Policy wording", "manual": "Claims manual"}
 DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash"
 MODEL_TIMEOUT = 60
 RETRY_DELAY = 1.0
+CLAIM_STEPS = 60  # LangGraph steps a claim agent can take, about 30 model calls
 FAILED = {
     "waiting": "failed, back in the queue",
     "needs_handler": "failed twice, left for a handler",
@@ -43,7 +43,7 @@ def model() -> ChatOpenAI:
     )
 
 
-def retries() -> ModelRetryMiddleware:
+def retries() -> ModelRetryMiddleware[Any, Any]:
     """Retry a failed model call twice, with backoff, then raise its error."""
     return ModelRetryMiddleware(
         max_retries=2, initial_delay=RETRY_DELAY, on_failure="error"
@@ -98,7 +98,10 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
     )
     states = agent.stream(
         {"messages": [{"role": "user", "content": f"Claim {claim_id}"}]},
-        config={"configurable": {"thread_id": thread_id}},
+        config={
+            "configurable": {"thread_id": thread_id},
+            "recursion_limit": CLAIM_STEPS,
+        },
         stream_mode="values",
     )
     messages = next(states)["messages"]
@@ -144,28 +147,3 @@ def work_claim(claim_id: str, llm: BaseChatModel | None = None) -> str:
         path = f"/api/claims/{claim_id}/failure"
         claim = call_backend("POST", path, {"reason": error})
     return report(claim, error)
-
-
-def work_queue() -> None:
-    """Work every waiting claim in queue order, printing each decision and a count."""
-    outcomes: Counter[str] = Counter()
-    for claim in call_backend("GET", "/api/claims"):
-        if claim["status"] != "waiting":
-            continue
-        claim_id = claim["claim_id"]
-        try:
-            run(claim_id, str(uuid.uuid4()))
-        except Exception as error:  # one failed claim shouldn't stop the queue
-            print(f"{claim_id}  failed: {error}", flush=True)
-            outcomes["failed"] += 1
-            continue
-        decision = call_backend("GET", f"/api/claims/{claim_id}")["decision"]
-        if decision is None:
-            print(f"{claim_id}  undecided", flush=True)
-            outcomes["undecided"] += 1
-        else:
-            outcome = decision["decision"]
-            print(f"{claim_id}  {outcome}  ${decision['payout']:,.2f}", flush=True)
-            outcomes[outcome] += 1
-    counts = ", ".join(f"{outcomes[name]} {name}" for name in sorted(outcomes))
-    print(f"Worked {outcomes.total()} claims: {counts or 'none waiting'}")
