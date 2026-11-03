@@ -29,6 +29,18 @@ When asked to implement the plan, as in "Please implement the plan for the pilot
 
 When the last phase is done, run `npm run check` and report the results.
 
+## Reviewing
+
+After a build, a person reads the code, even when `npm run check` is green and the live runs went well. The bar is the one for moving from a pilot to production:
+
+- Every rule about money or a claim's state is enforced in the backend, holds when two requests arrive at once, and has a test.
+- The agents' instructions give the goal, the tools and the rules, and leave the how to the model where it adds judgment.
+- Configuration and each call to another service live in one place.
+- Harness code is kept apart from domain code.
+- The code meets `docs/CODE_STANDARDS.md`.
+
+For each finding, confirm it in the code first. Then fix it, or write down why not. Look for the same pattern elsewhere, run `npm run check`, and add any new standard to `docs/CODE_STANDARDS.md`. Record the review and its decisions in `docs/STATUS.md`.
+
 ## Rules
 
 - Add tests with each change. Tests never call a model; use a stub model.

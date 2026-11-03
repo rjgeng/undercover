@@ -26,8 +26,9 @@ The claims pilot in `docs/PLAN.md` and the harness in `docs/PLAN_HARNESS.md` are
     - Starting a run stops any run left unfinished and puts its claims in progress back in the queue.
   - The documents and the instructions:
     - Seeding stores the policy wording and the claims manual, and `read_section` serves one numbered section of either.
-    - The agents' instructions are in `backend/instructions/`, written from the wording and the manual: `queue.md` for running the queue and `claim.md` for working a claim.
-    - `get_instructions` serves both, with the claim instructions followed by the contents of the wording and the manual.
+    - The agents' instructions are in `backend/instructions/`, written from the wording and the manual as goal, tools and rules: `queue.md` for running the queue and `claim.md` for working a claim.
+    - `get_instructions` serves both. The claim instructions are followed by the sections every claim needs, in full (wording 1, 9, 10 and 11, manual 2, 3, 5, 6 and 9), then the contents of both documents. The list of those sections is `GIVEN` in `backend/documents.py`.
+  - Each request that writes takes SQLite's write lock first (`BEGIN IMMEDIATE`), so a check and its write can't interleave with another request's, and the guarantees hold when requests arrive at once.
   - A test checks that every operation follows the API rules.
 - `agent/main.py`: the claim agent.
   - `work_claim(claim_id)` starts the claim and works it with a fresh claim agent, using six tools named after backend operations: `get_claim`, `get_policy`, `get_claim_history`, `read_section`, `record_decision` and `pay_claim`.
@@ -43,7 +44,7 @@ The claims pilot in `docs/PLAN.md` and the harness in `docs/PLAN_HARNESS.md` are
   - A run gets 20 LangGraph steps for each claim it can take.
 - `dashboard/`:
   - The queue (`/`): the latest agent run with its to-do list and summary, counts by state, including Needs a handler, and a line per claim.
-  - A claim in full (`/claims/:claimId`): its policy and earlier claims, the decision and payment, what the agent read, and the agent's steps as it works, including reads and failures. Also the number of failed attempts, and a sign-off form for a held payout.
+  - A claim in full (`/claims/:claimId`): its policy and earlier claims, the decision and payment, what the agent read, and the agent's steps as it works, including reads and failures. "What the agent read" lists the sections it looked up for the claim, beyond those every claim starts with. Also the number of failed attempts, and a sign-off form for a held payout.
   - The agent's instructions (`/instructions`), in two parts, running the queue and working a claim, read only.
   - The queue and a claim page refresh every two seconds. Styled to `BRAND.md` in light and dark mode.
 - `e2e/`: tests of:
@@ -58,19 +59,33 @@ The claims pilot in `docs/PLAN.md` and the harness in `docs/PLAN_HARNESS.md` are
 
 ## Last live run
 
-On November 3, 2026, after a reseed, `uv run -m agent --cap 5` with `deepseek/deepseek-v4.1-flash` worked five claims in 1 minute 8 seconds.
+On November 3, 2026, after the human review, a reseeded `uv run -m agent --cap 5` with `deepseek/deepseek-v4.1-flash` worked five claims in 27 seconds.
 
-- The queue agent chose the oldest submissions: CLM-1001, CLM-1008, CLM-1011, CLM-1018 and CLM-1010.
-- Its to-do list filled in, and each item was ticked off as the claim was worked.
-- CLM-1001 was approved for $420.00 and paid.
-- CLM-1008 ($2,240.00) and CLM-1011 ($1,150.00) were approved and wait for sign-off.
-- CLM-1018 was referred for a missing proof of value, and CLM-1010 was declined under the alcohol exclusion.
-- No claim failed, and the other 20 stayed waiting.
-- Each claim agent read 10 or 11 sections of the wording and the manual, and every reason is three sentences.
-
-The run before it found two problems, both fixed before this run:
-
-- It finished with its last to-do item still In progress, so `finish_run` now refuses while an item is open.
-- Two reasons ran to four sentences, so the claim instructions now say "never more" than three.
+- The queue agent handed out all five claims at once.
+- CLM-1001 was approved for $420.00 and paid, and CLM-1010 was declined.
+- CLM-1008 ($2,240.00) and CLM-1011 ($1,150.00) were approved and wait for sign-off. CLM-1018 was referred.
+- These are the same decisions as the three runs before it.
+- Each claim agent looked up two or three sections for its claim, such as the benefit's wording section and the notes in manual section 7.
+- Every reason is three sentences, and the to-do list ended with each item Done or Left for a handler.
 
 These decisions have not been scored against the handlers' decisions in `data/evals/`.
+
+## Human review
+
+A person reviewed the harness after the build (`docs/HUMAN_REVIEW_HARNESS.md`). Its points on the backend address, the backend calls, the imports and `run_queue` were confirmed, and kept.
+
+1. **The instructions were scripted procedures.** Confirmed, and decided: goal and tools.
+   - The brief wants the agent to organize its own work. The backend now holds the cap, missed claims, open to-do items and failures, so the queue instructions give the goal, the tools and what the handlers rely on.
+   - The claim agent is given the sections every claim needs up front, and looks up only what its claim calls for.
+   - The first goal-only run kept every item In progress until the end, and called payouts waiting for sign-off Done. The instructions now say why the list must stay true (the handlers watch it live) and what Done and Left for a handler mean.
+2. **An approval of $0.00 was said to be a prompt rule only.** Not confirmed. The backend has refused it since the pilot (`backend/models.py`, tested in `test_workflow.py`), so nothing changed.
+3. **A new HTTP client for every backend call.** Kept.
+   - Opening a connection to the local backend costs very little next to a model call of several seconds.
+   - It keeps `request()` simple, and lets the tests swap in the test backend.
+   - The backend does the same with a new SQLite connection per request, which is also kept.
+4. **Found by looking for the same patterns elsewhere.** The cap held only while the queue agent followed its instruction to hand out one claim at a time. Eight `take_claim` calls sent at once went over a cap of 1 in 14 of 20 tries, and a claim could be started twice. Each write request now takes the write lock first, with tests. This mattered at once: given goal and tools, the agent chose to work claims in parallel.
+
+Deferred:
+
+- A run of the whole queue could hand out every waiting claim at once. Five at once is tested live, but twenty is not. If it strains OpenRouter or SQLite, LangGraph's `max_concurrency` can bound it.
+- `docs/PLAN_HARNESS.md` still describes the procedural instructions, as the record of the plan that was built.
