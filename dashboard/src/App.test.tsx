@@ -105,10 +105,20 @@ it("shows other errors loading a claim", async () => {
   expect((await screen.findByRole("alert")).textContent).toBe("Server error");
 });
 
-it("shows the agent's instructions read only", async () => {
-  stubApi({ "GET /api/instructions": { text: "# UnderCover Agent" } });
+it("shows the agent's instructions in two parts, read only", async () => {
+  stubApi({
+    "GET /api/instructions": {
+      queue: "# Running the queue, in full",
+      claim: "# Working a claim, in full",
+    },
+  });
   renderAt("/instructions");
-  expect(await screen.findByText("# UnderCover Agent")).toBeDefined();
+  const queue = await screen.findByRole("region", {
+    name: "Running the queue",
+  });
+  expect(within(queue).getByText("# Running the queue, in full")).toBeDefined();
+  const claim = screen.getByRole("region", { name: "Working a claim" });
+  expect(within(claim).getByText("# Working a claim, in full")).toBeDefined();
   expect(screen.queryByRole("textbox")).toBeNull();
   expect(screen.queryByRole("button")).toBeNull();
 });

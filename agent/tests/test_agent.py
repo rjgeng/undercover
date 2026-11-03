@@ -59,16 +59,11 @@ def test_tools_are_named_after_backend_operations(client):
         "get_claim",
         "get_policy",
         "get_claim_history",
+        "read_section",
         "record_decision",
         "pay_claim",
     ]
     assert set(names) <= operations
-
-
-def test_get_instructions(client):
-    text = client.get("/api/instructions").json()["text"]
-    assert text.startswith("# UnderCover Agent")
-    assert "## 10. How we work out your payment" in text
 
 
 def test_run_approves_and_pays_within_the_limit(client):
@@ -109,7 +104,36 @@ def test_run_uses_the_instructions_from_the_backend(client):
     main.run("CLM-1003", "thread-1", stub)
     system = stub.prompts[0][0]
     assert isinstance(system, SystemMessage)
-    assert system.content == client.get("/api/instructions").json()["text"]
+    assert system.content == client.get("/api/instructions").json()["claim"]
+
+
+def test_the_sections_the_agent_reads_are_recorded(client):
+    stub = script(
+        "CLM-1003",
+        "POL-2003",
+        "CUS-3003",
+        "refer",
+        0,
+    )
+    stub.messages = iter(
+        [
+            call("read_section", document="manual", number=9),
+            call("read_section", document="manual", number=99),
+            *stub.messages,
+        ]
+    )
+    main.run("CLM-1003", "thread-1", stub)
+    steps = client.get("/api/claims/CLM-1003/steps").json()
+    assert [(s["kind"], s["content"]) for s in steps[:4]] == [
+        ("tool_call", 'read_section(document="manual", number=9)'),
+        ("read", "Claims manual, section 9: Repeat claims"),
+        ("tool_call", 'read_section(document="manual", number=99)'),
+        (
+            "tool_result",
+            "read_section: Refused with status 404: "
+            '{"detail":"Section 99 of the claims manual not found"}',
+        ),
+    ]
 
 
 def test_payment_over_the_limit_is_refused(client):

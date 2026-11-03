@@ -47,6 +47,12 @@ def get_claim_history(customer_id: str) -> str:
 
 
 @tool
+def read_section(document: Literal["wording", "manual"], number: int) -> str:
+    """Read one section of the policy wording or the claims manual."""
+    return reply(request("GET", f"/api/documents/{document}/sections/{number}"))
+
+
+@tool
 def record_decision(
     claim_id: str,
     decision: Literal["approve", "decline", "refer"],
@@ -70,4 +76,11 @@ def pay_claim(claim_id: str, amount: float) -> str:
     return reply(request("POST", f"/api/claims/{claim_id}/payment", {"amount": amount}))
 
 
-TOOLS = [get_claim, get_policy, get_claim_history, record_decision, pay_claim]
+TOOLS = [
+    get_claim,
+    get_policy,
+    get_claim_history,
+    read_section,
+    record_decision,
+    pay_claim,
+]

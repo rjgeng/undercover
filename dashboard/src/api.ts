@@ -95,6 +95,11 @@ export interface Handler {
   can_approve_over_limit: boolean;
 }
 
+export interface Instructions {
+  queue: string;
+  claim: string;
+}
+
 export interface Step {
   step_id: number;
   thread_id: string;
@@ -145,7 +150,7 @@ export const api = {
     request<PreviousClaim[]>(
       `/api/customers/${encodeURIComponent(customerId)}/claims`,
     ),
-  getInstructions: () => request<{ text: string }>("/api/instructions"),
+  getInstructions: () => request<Instructions>("/api/instructions"),
   listHandlers: () => request<Handler[]>("/api/handlers"),
   signOff: (claimId: string, handlerId: string) =>
     post<Claim>(`${claimPath(claimId)}/sign-off`, { handler_id: handlerId }),

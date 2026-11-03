@@ -72,7 +72,7 @@ Rules the backend enforces:
 
 - Seeding also reads `claims_manual.md` and stores it beside the wording. It still never reads `data/evals/`.
 - The backend splits each document at its `## N.` headings. A section is its heading and the text up to the next heading.
-- The claim agent's instructions end with the contents of both documents: each section's number and title, plus the names of the notes in manual section 7, such as Wild animals and Pre-existing conditions, so the agent can find them. The contents are built from the documents, not typed out.
+- The claim agent's instructions end with the contents of both documents: each section's number and title, and the names of the notes in any section that has them, such as Wild animals in manual section 7 and the add-ons in wording section 8, so the agent can find them. The contents are built from the documents, not typed out.
 - The agent reads a section with `read_section`. Its result is recorded as a `read` step, such as "Claims manual, section 9: Repeat claims", in place of the section's full text. The claim page lists these steps under "What the agent read".
 
 ### Instructions
@@ -157,19 +157,19 @@ Add the runs, the `needs_handler` state, failures, and the operations `start_run
 
 Seed the manual and split both documents into sections. Add `read_section`, the contents, and the instructions in two files, served by the new `get_instructions`. The claim agent gets `read_section` and the claim instructions, and records reads as `read` steps. The instructions page shows both parts. Update `docs/SPEC.md` so decisions follow the policy wording and the manual, and the manual leaves "Not for now".
 
-- [ ] `uv run -m backend.seed` prints the same line as before, and `grep -rn evals backend agent dashboard/src` finds nothing
-- [ ] `curl -s localhost:8000/api/documents/manual/sections/9` returns number 9, title `Repeat claims` and the section's text, which ends before section 10
-- [ ] `curl -s localhost:8000/api/documents/wording/sections/10` returns `How we work out your payment`. `manual/sections/15` and `handbook/sections/1` return 404
-- [ ] pytest: the 12 wording sections and 14 manual sections, joined in order, give back each document after its introduction
-- [ ] `curl -s localhost:8000/api/instructions` returns `queue` and `claim`
-- [ ] `claim` ends with the contents: 12 wording sections, 14 manual sections, and the 12 notes of manual section 7 from Unattended belongings to Treatment that can wait. It holds no section's text, such as "Count back 60 days"
-- [ ] A pytest test checks that the claim agent's tools are exactly `get_claim`, `get_policy`, `get_claim_history`, `read_section`, `record_decision` and `pay_claim`, each named after a backend operation
-- [ ] Stub model test: the system prompt the claim agent receives is `claim` from `get_instructions`
-- [ ] Stub model test: the stub reads manual section 9, and the claim's steps show the call to `read_section` and then a `read` step, "Claims manual, section 9: Repeat claims"
-- [ ] e2e: the instructions page shows "Running the queue" and "Working a claim"
-- [ ] Browser, `/instructions`: both parts, with no text box, input or edit button in the snapshot
-- [ ] `docs/SPEC.md` says decisions follow the policy wording and the claims manual, and no longer lists the manual under "Not for now"
-- [ ] `npm run check` passes
+- [x] `uv run -m backend.seed` prints the same line as before, and `grep -rn evals backend agent dashboard/src` finds nothing
+- [x] `curl -s localhost:8000/api/documents/manual/sections/9` returns number 9, title `Repeat claims` and the section's text, which ends before section 10
+- [x] `curl -s localhost:8000/api/documents/wording/sections/10` returns `How we work out your payment`. `manual/sections/15` and `handbook/sections/1` return 404
+- [x] pytest: the 12 wording sections and 14 manual sections, joined in order, give back each document after its introduction
+- [x] `curl -s localhost:8000/api/instructions` returns `queue` and `claim`
+- [x] `claim` ends with the contents: 12 wording sections, 14 manual sections, and the 12 notes of manual section 7 from Unattended belongings to Treatment that can wait. It holds no section's text, such as "Count back 60 days"
+- [x] A pytest test checks that the claim agent's tools are exactly `get_claim`, `get_policy`, `get_claim_history`, `read_section`, `record_decision` and `pay_claim`, each named after a backend operation
+- [x] Stub model test: the system prompt the claim agent receives is `claim` from `get_instructions`
+- [x] Stub model test: the stub reads manual section 9, and the claim's steps show the call to `read_section` and then a `read` step, "Claims manual, section 9: Repeat claims"
+- [x] e2e: the instructions page shows "Running the queue" and "Working a claim"
+- [x] Browser, `/instructions`: both parts, with no text box, input or edit button in the snapshot
+- [x] `docs/SPEC.md` says decisions follow the policy wording and the claims manual, and no longer lists the manual under "Not for now"
+- [x] `npm run check` passes
 
 ## Phase 3: A claim that fails is put right
 

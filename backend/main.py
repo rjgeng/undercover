@@ -12,6 +12,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException
 
 from backend.database import connect, database_path, seed
+from backend.documents import NAMES, contents, split
 from backend.models import (
     Claim,
     ClaimSummary,
@@ -27,6 +28,7 @@ from backend.models import (
     PreviousClaim,
     Run,
     RunRequest,
+    Section,
     SignOffRequest,
     StartRequest,
     Step,
@@ -35,7 +37,7 @@ from backend.models import (
     TodosRequest,
 )
 
-INSTRUCTIONS = Path(__file__).parent / "instructions.md"
+INSTRUCTIONS = Path(__file__).parent / "instructions"
 ATTEMPTS = 2  # a claim that fails this many times is left for a handler
 
 
@@ -72,6 +74,12 @@ def dollars(amount: float) -> str:
 def approval_limit(db: sqlite3.Connection) -> float:
     """Return the largest payout that can be paid without a handler's sign-off."""
     return db.execute("SELECT payout_approval_limit FROM settings").fetchone()[0]
+
+
+def documents(db: sqlite3.Connection) -> dict[str, str]:
+    """Return the policy wording and the claims manual."""
+    row = db.execute("SELECT policy_wording, claims_manual FROM settings").fetchone()
+    return {"wording": row["policy_wording"], "manual": row["claims_manual"]}
 
 
 def find_claim(db: sqlite3.Connection, claim_id: str) -> sqlite3.Row:
@@ -254,9 +262,27 @@ def get_claim_history(customer_id: str, db: Database) -> list[PreviousClaim]:
 
 @app.get("/api/instructions", operation_id="get_instructions")
 def get_instructions(db: Database) -> Instructions:
-    """Get the agent's instructions, followed by the policy wording."""
-    wording = db.execute("SELECT policy_wording FROM settings").fetchone()[0]
-    return Instructions(text=f"{INSTRUCTIONS.read_text(encoding='utf-8')}\n{wording}")
+    """Get the agent's instructions for running the queue and for working a claim."""
+    texts = documents(db)
+    claim = (INSTRUCTIONS / "claim.md").read_text(encoding="utf-8").strip()
+    return Instructions(
+        queue=(INSTRUCTIONS / "queue.md").read_text(encoding="utf-8"),
+        claim="\n\n".join(
+            [claim, *(contents(name, text) for name, text in texts.items())]
+        ),
+    )
+
+
+@app.get("/api/documents/{document}/sections/{number}", operation_id="read_section")
+def read_section(document: str, number: int, db: Database) -> Section:
+    """Read one section of the policy wording or the claims manual."""
+    texts = documents(db)
+    if document not in texts:
+        raise HTTPException(404, f"Document {document} not found")
+    for section in split(document, texts[document]):
+        if section.number == number:
+            return section
+    raise HTTPException(404, f"Section {number} of the {NAMES[document]} not found")
 
 
 @app.get("/api/handlers", operation_id="list_handlers")

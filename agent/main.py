@@ -19,6 +19,7 @@ from agent.tools import TOOLS, request
 load_dotenv(override=True)
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DOCUMENTS = {"wording": "Policy wording", "manual": "Claims manual"}
 DEFAULT_MODEL = "openai/gpt-6-luna"
 
 
@@ -45,9 +46,18 @@ def call_backend(method: str, path: str, body: dict[str, Any] | None = None) -> 
     return response.json()
 
 
+def read(section: dict[str, Any]) -> str:
+    """Name a section the agent read, like Claims manual, section 9: Repeat claims."""
+    document = DOCUMENTS[section["document"]]
+    return f"{document}, section {section['number']}: {section['title']}"
+
+
 def steps(message: AnyMessage) -> list[tuple[str, str]]:
     """Turn one message from the agent's run into steps for the dashboard."""
     if isinstance(message, ToolMessage):
+        found = message.status == "success" and not message.text.startswith("Refused")
+        if message.name == "read_section" and found:
+            return [("read", read(json.loads(message.text)))]
         return [("tool_result", f"{message.name}: {message.text}")]
     found = []
     if message.text:
@@ -62,7 +72,7 @@ def steps(message: AnyMessage) -> list[tuple[str, str]]:
 def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
     """Work one claim, recording each step with the backend, and return the reply."""
     call_backend("POST", f"/api/claims/{claim_id}/start", {"thread_id": thread_id})
-    instructions = call_backend("GET", "/api/instructions")["text"]
+    instructions = call_backend("GET", "/api/instructions")["claim"]
     agent = create_agent(
         llm or model(),
         tools=TOOLS,
