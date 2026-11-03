@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 
 from backend.database import connect, database_path, seed
 from backend.documents import NAMES, contents, split
@@ -52,9 +52,13 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="UnderCover", lifespan=lifespan)
 
 
-def database() -> Iterator[sqlite3.Connection]:
+def database(request: Request) -> Iterator[sqlite3.Connection]:
     """Open the database for one request and commit if the request succeeds."""
     with closing(connect()) as connection, connection:
+        if request.method != "GET":
+            # Take the write lock first, so two requests can't both pass a check,
+            # such as a run's cap, before either has written.
+            connection.execute("BEGIN IMMEDIATE")
         yield connection
 
 
