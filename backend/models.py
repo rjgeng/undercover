@@ -4,9 +4,13 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-Status = Literal["waiting", "in_progress", "waiting_for_sign_off", "decided"]
+Status = Literal[
+    "waiting", "in_progress", "waiting_for_sign_off", "needs_handler", "decided"
+]
 DecisionKind = Literal["approve", "decline", "refer"]
-StepKind = Literal["tool_call", "tool_result", "message"]
+StepKind = Literal["tool_call", "tool_result", "message", "read", "error"]
+RunStatus = Literal["running", "finished", "stopped"]
+TodoStatus = Literal["todo", "in_progress", "done", "handler"]
 
 
 class Item(BaseModel):
@@ -63,6 +67,7 @@ class Claim(BaseModel):
     documents: list[Document]
     status: Status
     thread_id: str | None
+    failures: int
     decision: Decision | None
     payment: Payment | None
 
@@ -115,6 +120,22 @@ class Instructions(BaseModel):
     text: str
 
 
+class TodoItem(BaseModel):
+    content: str = Field(min_length=1, description="What the agent means to do")
+    status: TodoStatus
+
+
+class Run(BaseModel):
+    run_id: str
+    cap: int
+    status: RunStatus
+    todos: list[TodoItem]
+    claims: list[str]
+    summary: str | None
+    started_at: str
+    finished_at: str | None
+
+
 class StartRequest(BaseModel):
     thread_id: str = Field(min_length=1)
 
@@ -152,3 +173,23 @@ class PaymentRequest(BaseModel):
 
 class SignOffRequest(BaseModel):
     handler_id: str
+
+
+class RunRequest(BaseModel):
+    cap: int = Field(ge=1, description="The most claims the run can take")
+
+
+class TakeRequest(BaseModel):
+    claim_id: str
+
+
+class TodosRequest(BaseModel):
+    todos: list[TodoItem]
+
+
+class FinishRequest(BaseModel):
+    summary: str = Field(min_length=1, description="A short summary for the handlers")
+
+
+class FailureRequest(BaseModel):
+    reason: str = Field(min_length=1, description="What went wrong")
