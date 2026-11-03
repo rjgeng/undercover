@@ -83,3 +83,40 @@ test("a handler signs off a payout over the limit", async ({
     page.getByText("Paid $1,350.00, signed off by Dana Whitfield"),
   ).toBeVisible();
 });
+
+test("a claim that fails twice is left for a handler", async ({
+  page,
+  request,
+}) => {
+  for (const attempt of ["e2e-3", "e2e-4"]) {
+    await send(request, "/api/claims/CLM-1007/start", { thread_id: attempt });
+    await send(request, "/api/claims/CLM-1007/failure", {
+      reason: `The model timed out on ${attempt}`,
+    });
+  }
+  await page.goto("/claims/CLM-1007");
+  await expect(
+    page.locator(".claim-heading").getByText("Needs a handler"),
+  ).toBeVisible();
+  await expect(page.getByText("Failed attempts")).toBeVisible();
+  await expect(page.getByText("The model timed out on e2e-3")).toBeVisible();
+  await expect(page.getByText("The model timed out on e2e-4")).toBeVisible();
+
+  await page.goto("/");
+  await expect(page.getByLabel("Needs a handler: 1")).toBeVisible();
+});
+
+test("the claim page shows what the agent read", async ({ page, request }) => {
+  await page.goto("/claims/CLM-1008");
+  const reads = page.getByRole("region", { name: "What the agent read" });
+  await expect(reads.getByText("No sections read yet.")).toBeVisible();
+
+  await send(request, "/api/claims/CLM-1008/start", { thread_id: "e2e-5" });
+  await send(request, "/api/claims/CLM-1008/steps", {
+    kind: "read",
+    content: "Claims manual, section 9: Repeat claims",
+  });
+  await expect(
+    reads.getByText("Claims manual, section 9: Repeat claims"),
+  ).toBeVisible();
+});

@@ -1,4 +1,4 @@
-import type { DecisionKind, Status } from "./api";
+import type { DecisionKind, RunStatus, Status, TodoStatus } from "./api";
 
 const dollars = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -39,7 +39,21 @@ export const statusLabels: Record<Status, string> = {
   waiting: "Waiting",
   in_progress: "In progress",
   waiting_for_sign_off: "Waiting for sign-off",
+  needs_handler: "Needs a handler",
   decided: "Decided",
+};
+
+export const runLabels: Record<RunStatus, string> = {
+  running: "Running",
+  finished: "Finished",
+  stopped: "Stopped",
+};
+
+export const todoLabels: Record<TodoStatus, string> = {
+  todo: "To do",
+  in_progress: "In progress",
+  done: "Done",
+  handler: "Left for a handler",
 };
 
 export const decisionLabels: Record<DecisionKind, string> = {

@@ -174,23 +174,80 @@ p {
 }
 
 .status-decided,
-.decision-approve {
+.decision-approve,
+.run-finished,
+.todo-done {
   background: var(--sea-green);
 }
 
 .status-in_progress,
-.decision-refer {
+.decision-refer,
+.run-running,
+.todo-in_progress {
   background: var(--marigold);
 }
 
 .status-waiting_for_sign_off,
-.decision-decline {
+.decision-decline,
+.run-stopped,
+.todo-handler {
   background: var(--coral);
 }
 
-.status-waiting {
+.status-waiting,
+.todo-todo {
   background: var(--cerulean);
   color: #ffffff;
+}
+
+.status-needs_handler {
+  background: var(--raspberry);
+  color: #ffffff;
+}
+
+.run {
+  margin-bottom: 20px;
+}
+
+.run-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.todos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.todo {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.todo .chip {
+  min-width: 128px;
+  text-align: center;
+}
+
+.run-summary {
+  margin: 16px 0 0;
+  background: var(--inset);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.reads {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
 }
 
 .tiles {

@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { api, type Status } from "../api";
 import { DecisionChip, StatusChip } from "../components/Chips";
 import { Message } from "../components/Message";
+import { RunPanel } from "../components/RunPanel";
 import { date, label, money, statusLabels } from "../format";
 import { REFRESH_MS, useLoad } from "../useLoad";
 
@@ -9,6 +10,7 @@ const states: Status[] = [
   "waiting",
   "in_progress",
   "waiting_for_sign_off",
+  "needs_handler",
   "decided",
 ];
 
@@ -19,6 +21,7 @@ export function QueuePage() {
   return (
     <>
       <h1>Claims queue</h1>
+      <RunPanel />
       <section className="tiles" aria-label="Claims by state">
         {states.map((status) => {
           const count = claims.filter((c) => c.status === status).length;

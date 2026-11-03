@@ -206,14 +206,14 @@ Build the queue agent with `list_claims`, `update_todos`, `work_claim` and `fini
 
 Add the run panel with the to-do list and the summary to the queue page, the Needs a handler state, "What the agent read", the `read` and `error` steps, and the failed attempts on the claim page.
 
-- [ ] vitest covers the run panel with no run, a running run with an item in each state, and a finished run with its summary. It also covers the Needs a handler tile and chip, "What the agent read", and the `read` and `error` steps
-- [ ] e2e, a run: the test starts a run with cap 2 and writes a to-do list for CLM-1005 and CLM-1006. Without a reload, the queue page shows the list, then each item changing as the test updates it, then the summary once the test decides both claims and finishes the run
-- [ ] e2e, a failure: the test starts and fails CLM-1007 twice. Its page shows Needs a handler, two failed attempts and both `error` steps, and the queue counts it under Needs a handler
-- [ ] e2e, a read: the test starts CLM-1008 and records a `read` step, and the claim page lists it under "What the agent read"
-- [ ] Browser, with `browser_evaluate`: each run state, to-do state and the Needs a handler chip has the background color from the design
-- [ ] Browser: screenshots of the queue page with a run, in light and dark mode, show rounded panels with no outlines, no one-edge borders and no gradients
-- [ ] Browser: `browser_console_messages` shows no errors on the queue, a claim and the instructions
-- [ ] `npm run check` passes
+- [x] vitest covers the run panel with no run, a running run with an item in each state, and a finished run with its summary. It also covers the Needs a handler tile and chip, "What the agent read", and the `read` and `error` steps
+- [x] e2e, a run: the test starts a run with cap 2 and writes a to-do list for CLM-1005 and CLM-1006. Without a reload, the queue page shows the list, then each item changing as the test updates it, then the summary once the test decides both claims and finishes the run
+- [x] e2e, a failure: the test starts and fails CLM-1007 twice. Its page shows Needs a handler, two failed attempts and both `error` steps, and the queue counts it under Needs a handler
+- [x] e2e, a read: the test starts CLM-1008 and records a `read` step, and the claim page lists it under "What the agent read"
+- [x] Browser, with `browser_evaluate`: each run state, to-do state and the Needs a handler chip has the background color from the design
+- [x] Browser: screenshots of the queue page with a run, in light and dark mode, show rounded panels with no outlines, no one-edge borders and no gradients
+- [x] Browser: `browser_console_messages` shows no errors on the queue, a claim and the instructions
+- [x] `npm run check` passes
 
 ## Phase 6: A live run of five, and the documents
 

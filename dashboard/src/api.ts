@@ -1,7 +1,14 @@
 export type Status =
-  "waiting" | "in_progress" | "waiting_for_sign_off" | "decided";
+  | "waiting"
+  | "in_progress"
+  | "waiting_for_sign_off"
+  | "needs_handler"
+  | "decided";
 export type DecisionKind = "approve" | "decline" | "refer";
-export type StepKind = "tool_call" | "tool_result" | "message";
+export type StepKind =
+  "tool_call" | "tool_result" | "message" | "read" | "error";
+export type RunStatus = "running" | "finished" | "stopped";
+export type TodoStatus = "todo" | "in_progress" | "done" | "handler";
 
 export interface ClaimSummary {
   claim_id: string;
@@ -57,6 +64,7 @@ export interface Claim {
   documents: ClaimDocument[];
   status: Status;
   thread_id: string | null;
+  failures: number;
   decision: Decision | null;
   payment: Payment | null;
 }
@@ -93,6 +101,22 @@ export interface Handler {
   name: string;
   role: string;
   can_approve_over_limit: boolean;
+}
+
+export interface Todo {
+  content: string;
+  status: TodoStatus;
+}
+
+export interface Run {
+  run_id: string;
+  cap: number;
+  status: RunStatus;
+  todos: Todo[];
+  claims: string[];
+  summary: string | null;
+  started_at: string;
+  finished_at: string | null;
 }
 
 export interface Instructions {
@@ -150,6 +174,7 @@ export const api = {
     request<PreviousClaim[]>(
       `/api/customers/${encodeURIComponent(customerId)}/claims`,
     ),
+  getLatestRun: () => request<Run | null>("/api/runs/latest"),
   getInstructions: () => request<Instructions>("/api/instructions"),
   listHandlers: () => request<Handler[]>("/api/handlers"),
   signOff: (claimId: string, handlerId: string) =>

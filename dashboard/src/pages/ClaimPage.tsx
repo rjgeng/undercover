@@ -71,6 +71,12 @@ function ClaimDetails({ claim }: Readonly<{ claim: Claim }>) {
           <dt>Amount claimed</dt>
           <dd className="mono">{money(claim.amount_claimed)}</dd>
         </div>
+        {claim.failures > 0 && (
+          <div>
+            <dt>Failed attempts</dt>
+            <dd className="mono">{claim.failures}</dd>
+          </div>
+        )}
       </dl>
       <h3>The customer's story</h3>
       <p className="story">{claim.story}</p>

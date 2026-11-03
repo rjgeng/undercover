@@ -232,3 +232,62 @@ it("shows why a sign-off was refused", async () => {
     "Claim CLM-1002 is not waiting for sign-off",
   );
 });
+
+function step(step_id: number, kind: Step["kind"], content: string): Step {
+  return { step_id, thread_id: "t-1", kind, content, created_at: decidedAt };
+}
+
+async function panel(name: string) {
+  return within(await screen.findByRole("region", { name }));
+}
+
+it("shows what the agent read, and a failed attempt", async () => {
+  showClaim({ ...claim, status: "waiting", failures: 1 }, [
+    step(1, "read", "Claims manual, section 9: Repeat claims"),
+    step(2, "read", "Policy wording, section 5: Baggage and Personal Effects"),
+    step(3, "error", "The model timed out"),
+  ]);
+  const reads = await panel("What the agent read");
+  expect(
+    (await reads.findAllByRole("listitem")).map((item) => item.textContent),
+  ).toEqual([
+    "Claims manual, section 9: Repeat claims",
+    "Policy wording, section 5: Baggage and Personal Effects",
+  ]);
+  const work = await panel("Agent at work");
+  expect(
+    work.getByText("Claims manual, section 9: Repeat claims").closest("p")
+      ?.textContent,
+  ).toBe("Read Claims manual, section 9: Repeat claims");
+  expect(work.getByText("The model timed out").closest("p")?.textContent).toBe(
+    "Failed The model timed out",
+  );
+  expect(screen.getByText("Failed attempts").nextSibling?.textContent).toBe(
+    "1",
+  );
+  const decision = await decisionPanel();
+  expect(
+    decision.getByText(
+      "The agent's last attempt failed, and the claim is back in the queue.",
+    ),
+  ).toBeDefined();
+});
+
+it("says when nothing has been read yet", async () => {
+  showClaim(claim);
+  const reads = await panel("What the agent read");
+  expect(reads.getByText("No sections read yet.")).toBeDefined();
+});
+
+it("shows a claim left for a handler", async () => {
+  showClaim({ ...claim, status: "needs_handler", failures: 2 });
+  const decision = await decisionPanel();
+  expect(
+    decision.getByText(
+      "The agent failed twice on this claim, so it's left for a handler.",
+    ),
+  ).toBeDefined();
+  expect(screen.getByText("Needs a handler").className).toBe(
+    "chip status-needs_handler",
+  );
+});

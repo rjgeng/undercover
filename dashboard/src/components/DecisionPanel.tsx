@@ -12,13 +12,7 @@ export function DecisionPanel({
   return (
     <section className="panel" aria-labelledby="decision-title">
       <h2 id="decision-title">Decision</h2>
-      {!decision && (
-        <p className="muted">
-          {claim.status === "in_progress"
-            ? "The agent is working on this claim."
-            : "The agent hasn't started on this claim."}
-        </p>
-      )}
+      {!decision && <p className="muted">{progress(claim)}</p>}
       {decision && (
         <>
           <div className="decision-line">
@@ -53,4 +47,14 @@ export function DecisionPanel({
       )}
     </section>
   );
+}
+
+function progress(claim: Claim): string {
+  if (claim.status === "in_progress")
+    return "The agent is working on this claim.";
+  if (claim.status === "needs_handler")
+    return "The agent failed twice on this claim, so it's left for a handler.";
+  if (claim.failures > 0)
+    return "The agent's last attempt failed, and the claim is back in the queue.";
+  return "The agent hasn't started on this claim.";
 }

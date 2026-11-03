@@ -9,29 +9,44 @@ const SUMMARY_LENGTH = 90;
 export function StepList({ claimId }: Readonly<{ claimId: string }>) {
   const load = useCallback(() => api.listSteps(claimId), [claimId]);
   const { data: steps, error } = useLoad(load, REFRESH_MS);
+  const reads = steps?.filter((step) => step.kind === "read") ?? [];
 
   return (
-    <section className="panel" aria-labelledby="steps-title">
-      <h2 id="steps-title">Agent at work</h2>
-      {!steps && <Message error={error} />}
-      {steps?.length === 0 && (
-        <p className="muted">
-          No steps yet. They appear here as the agent works.
-        </p>
-      )}
-      {steps && steps.length > 0 && (
-        <ol className="steps">
-          {steps.map((step) => (
-            <li key={step.step_id} className={`step step-${step.kind}`}>
-              <span className="step-time small muted">
-                {time(step.created_at)}
-              </span>
-              <StepBody step={step} />
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
+    <>
+      <section className="panel" aria-labelledby="reads-title">
+        <h2 id="reads-title">What the agent read</h2>
+        {reads.length === 0 ? (
+          <p className="muted">No sections read yet.</p>
+        ) : (
+          <ul className="reads">
+            {reads.map((step) => (
+              <li key={step.step_id}>{step.content}</li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section className="panel" aria-labelledby="steps-title">
+        <h2 id="steps-title">Agent at work</h2>
+        {!steps && <Message error={error} />}
+        {steps?.length === 0 && (
+          <p className="muted">
+            No steps yet. They appear here as the agent works.
+          </p>
+        )}
+        {steps && steps.length > 0 && (
+          <ol className="steps">
+            {steps.map((step) => (
+              <li key={step.step_id} className={`step step-${step.kind}`}>
+                <span className="step-time small muted">
+                  {time(step.created_at)}
+                </span>
+                <StepBody step={step} />
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+    </>
   );
 }
 
@@ -58,9 +73,10 @@ function StepBody({ step }: Readonly<{ step: Step }>) {
       </details>
     );
   }
+  const labels = { message: "Agent", read: "Read", error: "Failed" };
   return (
     <p>
-      <span className="step-label">Agent</span> {step.content}
+      <span className="step-label">{labels[step.kind]}</span> {step.content}
     </p>
   );
 }

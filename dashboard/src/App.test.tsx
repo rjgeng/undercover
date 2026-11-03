@@ -19,6 +19,7 @@ function renderAt(path: string) {
 
 it("shows the queue with counts by state", async () => {
   stubApi({
+    "GET /api/runs/latest": null,
     "GET /api/claims": [
       summary,
       {
