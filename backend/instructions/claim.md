@@ -35,7 +35,7 @@ Call `record_decision` with:
 - `decision`: approve, decline or refer
 - `payout`: in US dollars, worked out as wording section 10 and manual section 6 say. A decline or a referral has a payout of 0.
 - `section`: the section you relied on, such as "Wording section 3, Trip Delay" or "Manual section 9, Repeat claims"
-- `reason`: two or three plain sentences that explain the decision to a colleague. For a referral, say what is needed.
+- `reason`: two or three plain sentences, never more, that explain the decision to a colleague. Give the working of the payout in one of them. For a referral, say what is needed.
 
 For an approval, then call `pay_claim` with the payout. A payout over $1,000 needs a handler's sign-off before it is paid (manual section 3). If `pay_claim` says so, that is expected: the payment waits for the handler, and you should not try again.
 

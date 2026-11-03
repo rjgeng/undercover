@@ -203,6 +203,23 @@ def test_finish_refuses_while_there_is_room_and_a_claim_waits(client, database):
     )
 
 
+def test_finish_refuses_while_a_todo_item_is_open(client):
+    run_id = start_run(client, 1)["run_id"]
+    take(client, run_id, "CLM-1001")
+    start(client, "CLM-1001")
+    decide(client, "CLM-1001", "decline", 0)
+    todos(
+        client, run_id, [{"content": "CLM-1001, trip delay", "status": "in_progress"}]
+    )
+    response = finish(client, run_id)
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        f"Run {run_id} has to-do items still open: CLM-1001, trip delay"
+    )
+    todos(client, run_id, [{"content": "CLM-1001, trip delay", "status": "done"}])
+    assert finish(client, run_id).json()["status"] == "finished"
+
+
 def test_finish_run(client):
     run_id = start_run(client, 1)["run_id"]
     take(client, run_id, "CLM-1001")

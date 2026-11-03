@@ -19,8 +19,9 @@ Our goal is to handle claims straight through, as accurately as our handlers do.
 
 ## What the team needs to see
 
-- The queue, with where each claim stands: waiting, in progress, waiting for sign-off or decided.
-- Each claim in full, with the agent's decision and its reasons.
+- The queue, with where each claim stands: waiting, in progress, waiting for sign-off, needs a handler or decided.
+- The agent's to-do list for the current run, kept up to date as it works, and its summary at the end.
+- Each claim in full, with the agent's decision, its reasons and the sections it read.
 - What the agent is doing on a claim while it works, step by step.
 - The agent's instructions, read only.
 

@@ -40,6 +40,7 @@ Only a claim in progress can fail, so a decided claim never goes back in the que
 - A run has an id like `RUN-1a2b3c4d`, a cap, a state (`running`, `finished` or `stopped`), a to-do list, the claims it has taken, a summary, and its start and finish times. Tables: `runs` and `run_claims`.
 - The cap is the most claims a run can take. Trying one of its own claims again doesn't use another place.
 - A run owes its own claims that are back in waiting, and, while it has taken fewer claims than its cap, any other waiting claim. `finish_run` refuses while a run owes anything. That's the check for missed claims, enforced in the backend. The queue agent's instructions also tell it to check before it finishes.
+- `finish_run` also refuses while an item on the to-do list is still To do or In progress, so the list the handlers see is ticked off to the end. This rule was added in phase 6, after the first live run finished with its last item still In progress.
 - One run at a time. `start_run` stops any run still `running`, such as one whose process was stopped, and records a failure on each of its claims that are still in progress, which puts them back in the queue. A claim worked on its own with `uv run -m agent CLM-1001` belongs to no run, and this leaves it alone.
 - A to-do item has `content` and a `status`: `todo`, `in_progress`, `done` or `handler`, shown as To do, In progress, Done and Left for a handler. The agent marks a claim Done when it decides it, and Left for a handler when the claim is referred, held for sign-off or failed twice.
 
@@ -62,7 +63,7 @@ Rules the backend enforces:
 
 - `take_claim` needs a running run (409), a known claim (404) that is waiting (409), and a run under its cap unless the claim is already one of its own (409, "Run RUN-1a2b3c4d has taken its cap of 5 claims").
 - `update_todos` needs a running run (409). Each item needs content, and a status that is one of the four (422).
-- `finish_run` needs a running run (409) and a summary (422). While the run owes claims, it returns 409 naming them, such as "Run RUN-1a2b3c4d has missed waiting claims: CLM-1004, CLM-1005".
+- `finish_run` needs a running run (409) and a summary (422). While the run owes claims, it returns 409 naming them, such as "Run RUN-1a2b3c4d has missed waiting claims: CLM-1004, CLM-1005", and while a to-do item is still open it returns 409 naming the item.
 - `fail_claim` needs a claim in progress (409) and a reason (422). It also records the reason on the claim as a step of kind `error`.
 - `read_section` returns 404 for an unknown document or section number.
 - `get_claim` adds `failures`. Steps gain two kinds: `read`, a section the agent read, and `error`, a failure.
@@ -219,15 +220,15 @@ Add the run panel with the to-do list and the summary to the queue page, the Nee
 
 Run the harness live, capped at five, watch it in the dashboard, and bring the documents up to date.
 
-- [ ] Live: on a reseeded database, with `npm run dev` running and `/` open in the browser, `uv run -m agent --cap 5` prints five claim lines and a summary
-- [ ] Live, in the browser: snapshots taken during the run show the to-do list filling in and its items being ticked off
-- [ ] Live: afterwards no claim is `in_progress`, 20 claims are still `waiting`, and the run is `finished` with its summary
-- [ ] Live: each of the five claims shows its steps and "What the agent read", and each decision has a section and a reason of two or three sentences
-- [ ] Live: every approval over $1,000 is `waiting_for_sign_off` with no payment, every other approval is paid exactly its payout, and any failure shows as back in the queue or needing a handler
-- [ ] `docs/SPEC.md` lists the to-do list and the Needs a handler state in what the team sees
-- [ ] `docs/TECH_STACK.md` describes the two agents, the middleware, the default model, the entry points and `UNDERCOVER_API`
-- [ ] `docs/STATUS.md` describes what's built, how to run a capped run and one claim, and the live run
-- [ ] `npm run check` passes
+- [x] Live: on a reseeded database, with `npm run dev` running and `/` open in the browser, `uv run -m agent --cap 5` prints five claim lines and a summary
+- [x] Live, in the browser: snapshots taken during the run show the to-do list filling in and its items being ticked off
+- [x] Live: afterwards no claim is `in_progress`, 20 claims are still `waiting`, and the run is `finished` with its summary
+- [x] Live: each of the five claims shows its steps and "What the agent read", and each decision has a section and a reason of two or three sentences
+- [x] Live: every approval over $1,000 is `waiting_for_sign_off` with no payment, every other approval is paid exactly its payout, and any failure shows as back in the queue or needing a handler
+- [x] `docs/SPEC.md` lists the to-do list and the Needs a handler state in what the team sees
+- [x] `docs/TECH_STACK.md` describes the two agents, the middleware, the default model, the entry points and `UNDERCOVER_API`
+- [x] `docs/STATUS.md` describes what's built, how to run a capped run and one claim, and the live run
+- [x] `npm run check` passes
 
 ## Not in this plan
 

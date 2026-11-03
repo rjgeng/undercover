@@ -265,3 +265,25 @@ def test_command_line_with_nothing_waiting(monkeypatch, capsys, database):
     monkeypatch.setattr(cli, "run_queue", lambda cap: pytest.fail("no run expected"))
     cli.main([])
     assert capsys.readouterr().out == "No claims are waiting.\n"
+
+
+def test_a_run_cant_finish_with_an_item_still_open(client, database):
+    leave_waiting(database, "CLM-1001")
+    queue = stub(
+        call("update_todos", todos=todos(("CLM-1001", "in_progress"))),
+        call("work_claim", claim_id="CLM-1001"),
+        call("finish_run", summary="Too soon."),
+        call("update_todos", todos=todos(("CLM-1001", "done"))),
+        call("finish_run", summary="One claim declined."),
+        AIMessage("Finished."),
+    )
+    run_queue(1, queue, stub(*decide("CLM-1001", "decline", 0)))
+
+    run_id = run(client)["run_id"]
+    still_open = f"Run {run_id} has to-do items still open: Work CLM-1001"
+    assert tool_replies(queue)[2] == refusal(still_open)
+    finished = run(client)
+    assert (finished["status"], finished["todos"]) == (
+        "finished",
+        todos(("CLM-1001", "done")),
+    )

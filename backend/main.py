@@ -444,12 +444,21 @@ def update_todos(run_id: str, request: TodosRequest, db: Database) -> Run:
 
 @app.post("/api/runs/{run_id}/finish", operation_id="finish_run")
 def finish_run(run_id: str, request: FinishRequest, db: Database) -> Run:
-    """Finish a run with a summary, unless it has missed a waiting claim."""
+    """Finish a run with a summary, once nothing is missed and every item is closed."""
     run = running_run(db, run_id)
     missed = missed_claims(db, run)
     if missed:
         raise HTTPException(
             409, f"Run {run_id} has missed waiting claims: {', '.join(missed)}"
+        )
+    still_open = [
+        todo["content"]
+        for todo in json.loads(run["todos"])
+        if todo["status"] in ("todo", "in_progress")
+    ]
+    if still_open:
+        raise HTTPException(
+            409, f"Run {run_id} has to-do items still open: {'; '.join(still_open)}"
         )
     db.execute(
         "UPDATE runs SET status = 'finished', summary = ?, finished_at = ?"
