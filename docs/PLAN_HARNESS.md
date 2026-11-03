@@ -175,18 +175,18 @@ Seed the manual and split both documents into sections. Add `read_section`, the 
 
 Build `work_claim`'s core, which works one claim, records its steps, catches any failure with `fail_claim` and returns one line. Add the new default model, the timeout and `ModelRetryMiddleware`, and the backend address from `UNDERCOVER_API`. `uv run -m agent CLM-1001` uses it.
 
-- [ ] Stub model tests: deciding a claim returns `CLM-1001: approve $420.00, paid`, `CLM-1002: approve $1,350.00, waiting for sign-off` and `CLM-1003: refer $0.00`
-- [ ] Stub model test: a model that raises on every call leaves the claim `waiting` with `failures` 1 and an `error` step, and the line says "failed, back in the queue". A second run leaves it `needs_handler`, and the line says "failed twice, left for a handler"
-- [ ] Stub model test: an agent that ends without recording a decision is a failure, "ended without a decision"
-- [ ] Stub model test: a model that fails once and then answers is retried, and the claim is decided with `failures` 0
-- [ ] Stub model test: a tool whose backend call raises fails the claim, and it goes back in the queue
-- [ ] Stub model test: when the model fails after the decision is recorded, the claim keeps its decision, isn't put back, and the line gives the decision and the error
-- [ ] `model()` returns `deepseek/deepseek-v4.1-flash` with reasoning effort low, a 60-second timeout and no client retries, or `MODEL_NAME` if set
-- [ ] The agent reaches the backend at `UNDERCOVER_API`, or `http://127.0.0.1:8000` when it isn't set
-- [ ] Stub test of the command line: `uv run -m agent CLM-1001` prints the claim's line
-- [ ] Live: on a reseeded database with `npm run dev` running, `uv run -m agent CLM-1001` prints a line with a decision
-- [ ] Live: the steps of CLM-1001 include calls to `read_section` with their `read` steps, and no step holds the whole wording
-- [ ] `npm run check` passes
+- [x] Stub model tests: deciding a claim returns `CLM-1001: approve $420.00, paid`, `CLM-1002: approve $1,350.00, waiting for sign-off` and `CLM-1003: refer $0.00`
+- [x] Stub model test: a model that raises on every call leaves the claim `waiting` with `failures` 1 and an `error` step, and the line says "failed, back in the queue". A second run leaves it `needs_handler`, and the line says "failed twice, left for a handler"
+- [x] Stub model test: an agent that ends without recording a decision is a failure, "ended without a decision"
+- [x] Stub model test: a model that fails once and then answers is retried, and the claim is decided with `failures` 0
+- [x] Stub model test: a tool whose backend call raises fails the claim, and it goes back in the queue
+- [x] Stub model test: when the model fails after the decision is recorded, the claim keeps its decision, isn't put back, and the line gives the decision and the error
+- [x] `model()` returns `deepseek/deepseek-v4.1-flash` with reasoning effort low, a 60-second timeout and no client retries, or `MODEL_NAME` if set
+- [x] The agent reaches the backend at `UNDERCOVER_API`, or `http://127.0.0.1:8000` when it isn't set
+- [x] Stub test of the command line: `uv run -m agent CLM-1001` prints the claim's line
+- [x] Live: on a reseeded database with `npm run dev` running, `uv run -m agent CLM-1001` prints a line with a decision
+- [x] Live: the steps of CLM-1001 include calls to `read_section` with their `read` steps, and no step holds the whole wording
+- [x] `npm run check` passes
 
 ## Phase 4: The queue agent runs the queue
 

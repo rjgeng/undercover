@@ -8,6 +8,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
+from langchain.agents.middleware import ModelRetryMiddleware
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AnyMessage, ToolMessage
 from langchain_openai import ChatOpenAI
@@ -20,17 +21,32 @@ load_dotenv(override=True)
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DOCUMENTS = {"wording": "Policy wording", "manual": "Claims manual"}
-DEFAULT_MODEL = "openai/gpt-6-luna"
+DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash"
+MODEL_TIMEOUT = 60
+RETRY_DELAY = 1.0
+FAILED = {
+    "waiting": "failed, back in the queue",
+    "needs_handler": "failed twice, left for a handler",
+}
 
 
 def model() -> ChatOpenAI:
-    """Return the model named in MODEL_NAME, or GPT-6 Luna by default."""
+    """Return the model named in MODEL_NAME, or DeepSeek V4.1 Flash by default."""
     name = os.getenv("MODEL_NAME")
     return ChatOpenAI(
         model=name or DEFAULT_MODEL,
         base_url=OPENROUTER_BASE_URL,
         api_key=SecretStr(os.environ["OPENROUTER_API_KEY"]),
         reasoning_effort=None if name else "low",
+        timeout=MODEL_TIMEOUT,
+        max_retries=0,
+    )
+
+
+def retries() -> ModelRetryMiddleware:
+    """Retry a failed model call twice, with backoff, then raise its error."""
+    return ModelRetryMiddleware(
+        max_retries=2, initial_delay=RETRY_DELAY, on_failure="error"
     )
 
 
@@ -60,7 +76,7 @@ def steps(message: AnyMessage) -> list[tuple[str, str]]:
             return [("read", read(json.loads(message.text)))]
         return [("tool_result", f"{message.name}: {message.text}")]
     found = []
-    if message.text:
+    if message.text.strip():
         found.append(("message", message.text))
     if isinstance(message, AIMessage):
         for call in message.tool_calls:
@@ -77,6 +93,7 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
         llm or model(),
         tools=TOOLS,
         system_prompt=instructions,
+        middleware=[retries()],
         checkpointer=InMemorySaver(),
     )
     states = agent.stream(
@@ -95,6 +112,38 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
                 )
         messages = state["messages"]
     return messages[-1].text
+
+
+def report(claim: dict[str, Any], error: str | None) -> str:
+    """Report on a claim in one line, like CLM-1001: approve $420.00, paid."""
+    decision = claim["decision"]
+    if decision is None:
+        state = FAILED.get(claim["status"], "not worked")
+        return f"{claim['claim_id']}: {state}: {error}"
+    line = f"{claim['claim_id']}: {decision['decision']} ${decision['payout']:,.2f}"
+    if decision["decision"] == "approve":
+        if claim["payment"]:
+            line += ", paid"
+        elif claim["status"] == "waiting_for_sign_off":
+            line += ", waiting for sign-off"
+        else:
+            line += ", not paid"
+    return line if error is None else f"{line}: {error}"
+
+
+def work_claim(claim_id: str, llm: BaseChatModel | None = None) -> str:
+    """Work one claim with a fresh claim agent, and report on it in one line."""
+    error = None
+    try:
+        run(claim_id, str(uuid.uuid4()), llm)
+    except Exception as failure:  # a claim that fails is put right, not left stuck
+        error = str(failure) or type(failure).__name__
+    claim = call_backend("GET", f"/api/claims/{claim_id}")
+    if claim["status"] == "in_progress":
+        error = error or "The agent ended without a decision"
+        path = f"/api/claims/{claim_id}/failure"
+        claim = call_backend("POST", path, {"reason": error})
+    return report(claim, error)
 
 
 def work_queue() -> None:

@@ -1,16 +1,17 @@
 """The agent's tools, each named after the backend operation it calls."""
 
+import os
 from typing import Any, Literal
 
 import httpx
 from langchain_core.tools import tool
 
-BACKEND_URL = "http://localhost:8000"
+BACKEND_URL = "http://127.0.0.1:8000"
 
 
 def backend() -> httpx.Client:
-    """Return a client for the UnderCover backend."""
-    return httpx.Client(base_url=BACKEND_URL, timeout=30)
+    """Return a client for the backend at UNDERCOVER_API, or on port 8000."""
+    return httpx.Client(base_url=os.getenv("UNDERCOVER_API", BACKEND_URL), timeout=30)
 
 
 def request(

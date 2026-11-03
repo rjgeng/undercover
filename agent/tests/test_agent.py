@@ -1,6 +1,10 @@
+from collections.abc import Iterator
+from typing import Any
+
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, BaseMessage, SystemMessage, ToolMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
 
 from agent import __main__ as cli
 from agent import main
@@ -8,8 +12,10 @@ from agent.tools import TOOLS
 
 
 class StubModel(GenericFakeChatModel):
-    """A chat model that gives scripted replies and keeps the prompts it was sent."""
+    """A chat model that gives scripted replies, or raises the errors in its
+    script, and keeps the prompts it was sent."""
 
+    messages: Iterator[Any]
     prompts: list[list[BaseMessage]] = []
 
     def bind_tools(self, tools, **kwargs):
@@ -17,7 +23,15 @@ class StubModel(GenericFakeChatModel):
 
     def _generate(self, messages, stop=None, run_manager=None, **kwargs):
         self.prompts.append(messages)
-        return super()._generate(messages, stop, run_manager, **kwargs)
+        reply = next(self.messages)
+        if isinstance(reply, Exception):
+            raise reply
+        return ChatResult(generations=[ChatGeneration(message=reply)])
+
+
+def stub(*replies):
+    """A stub model with the replies given, which can include errors to raise."""
+    return StubModel(messages=iter(replies))
 
 
 def call(name, text="", **args):
@@ -177,21 +191,27 @@ def test_run_needs_a_waiting_claim():
 
 
 def test_command_line(monkeypatch, capsys):
-    runs = []
+    worked = []
     monkeypatch.setattr(
         cli,
-        "run",
-        lambda claim_id, thread_id: runs.append((claim_id, thread_id)) or "Done.",
+        "work_claim",
+        lambda claim_id: worked.append(claim_id) or f"{claim_id}: refer $0.00",
     )
     cli.main(["CLM-1001"])
-    assert capsys.readouterr().out == "Done.\n"
-    assert runs[0][0] == "CLM-1001"
-    assert len(runs[0][1]) == 36
+    assert capsys.readouterr().out == "CLM-1001: refer $0.00\n"
+    assert worked == ["CLM-1001"]
 
 
-def test_model_name(monkeypatch):
+def test_model(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     monkeypatch.delenv("MODEL_NAME", raising=False)
-    assert main.model().model_name == "openai/gpt-6-luna"
+    llm = main.model()
+    assert llm.model_name == "deepseek/deepseek-v4.1-flash"
+    assert (llm.reasoning_effort, llm.request_timeout, llm.max_retries) == (
+        "low",
+        60,
+        0,
+    )
     monkeypatch.setenv("MODEL_NAME", "openrouter/free")
-    assert main.model().model_name == "openrouter/free"
+    llm = main.model()
+    assert (llm.model_name, llm.reasoning_effort) == ("openrouter/free", None)
