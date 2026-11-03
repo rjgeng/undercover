@@ -277,6 +277,9 @@ it("says when nothing has been read yet", async () => {
   showClaim(claim);
   const reads = await panel("What the agent read");
   expect(reads.getByText("No sections read yet.")).toBeDefined();
+  expect(
+    reads.getByRole("link", { name: "instructions" }).getAttribute("href"),
+  ).toBe("/instructions");
 });
 
 it("shows a claim left for a handler", async () => {

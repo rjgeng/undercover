@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { Link } from "react-router";
 import { api, type Step } from "../api";
 import { time } from "../format";
 import { REFRESH_MS, useLoad } from "../useLoad";
@@ -15,6 +16,11 @@ export function StepList({ claimId }: Readonly<{ claimId: string }>) {
     <>
       <section className="panel" aria-labelledby="reads-title">
         <h2 id="reads-title">What the agent read</h2>
+        <p className="small muted">
+          Beyond the sections every claim starts with, in its{" "}
+          <Link to="/instructions">instructions</Link>, these are the ones it
+          looked up for this claim.
+        </p>
         {reads.length === 0 ? (
           <p className="muted">No sections read yet.</p>
         ) : (

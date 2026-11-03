@@ -64,12 +64,15 @@ def test_the_claim_instructions_end_with_the_contents(client):
     claim = client.get("/api/instructions").json()["claim"]
     wording = contents(claim, "policy wording")
     manual = contents(claim, "claims manual")
-    assert (len(wording), wording[0], wording[-1]) == (
-        12,
-        "1. Your plan",
-        "12. Definitions",
+    assert (len(wording), len(manual)) == (12, 14)
+    assert wording[:2] == [
+        "1. Your plan, given above",
+        "2. Trip Cancellation and Interruption",
+    ]
+    assert wording[7] == (
+        "8. Add-ons: Adventure Sports, Pre-Existing Condition Waiver, Electronics Plus"
     )
-    assert (len(manual), manual[-1]) == (14, "14. Records")
+    assert manual[8] == "9. Repeat claims, given above"
     notes = manual[6].removeprefix("7. Interpretation notes: ").split(", ")
     assert notes == [
         "Unattended belongings",
@@ -87,10 +90,14 @@ def test_the_claim_instructions_end_with_the_contents(client):
     ]
 
 
-def test_the_instructions_hold_no_section_text(client):
+def test_the_claim_instructions_give_only_the_sections_every_claim_needs(client):
     instructions = client.get("/api/instructions").json()
     claim = instructions["claim"]
+    given = re.findall(r"^### (\d+)\. ", claim, re.MULTILINE)
+    assert given == ["1", "9", "10", "11", "2", "3", "5", "6", "9"]
+    assert "File your claim within 90 days of the incident." in claim
+    assert "third claim within any 12 month period" in claim
     assert "Count back 60 days" not in claim
-    assert "## 10. How we work out your payment" not in claim
+    assert "Theft must be reported to the local police" not in claim
     for text in instructions.values():
         assert "data/" not in text

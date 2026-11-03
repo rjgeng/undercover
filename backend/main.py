@@ -12,7 +12,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, Request
 
 from backend.database import connect, database_path, seed
-from backend.documents import NAMES, contents, split
+from backend.documents import NAMES, contents, given, split
 from backend.models import (
     Claim,
     ClaimSummary,
@@ -272,7 +272,11 @@ def get_instructions(db: Database) -> Instructions:
     return Instructions(
         queue=(INSTRUCTIONS / "queue.md").read_text(encoding="utf-8"),
         claim="\n\n".join(
-            [claim, *(contents(name, text) for name, text in texts.items())]
+            [
+                claim,
+                *(given(name, text) for name, text in texts.items()),
+                *(contents(name, text) for name, text in texts.items()),
+            ]
         ),
     )
 
